@@ -1,0 +1,173 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Orders</h2>
+</div>
+
+<!-- Search -->
+<div class="mb-4">
+    <form method="GET" class="flex gap-2">
+        <input type="text" name="search" value="{{.Search}}" placeholder="Search by order ID or status..."
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm font-medium">
+            Search
+        </button>
+        {{if .Search}}
+        <a href="?" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium flex items-center">
+            Clear
+        </a>
+        {{end}}
+    </form>
+</div>
+
+<!-- Orders Table -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {{range .Orders}}
+            <tr id="order-row-{{.ID}}">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{{.ID}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{.UserEmail}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">฿{{.TotalAmount}}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <select onchange="updateOrderStatus('{{.ID}}', this.value)"
+                        class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500">
+                        <option value="pending" {{if eq .Status "pending"}}selected{{end}}>Pending</option>
+                        <option value="confirmed" {{if eq .Status "confirmed"}}selected{{end}}>Confirmed</option>
+                        <option value="shipped" {{if eq .Status "shipped"}}selected{{end}}>Shipped</option>
+                        <option value="delivered" {{if eq .Status "delivered"}}selected{{end}}>Delivered</option>
+                        <option value="cancelled" {{if eq .Status "cancelled"}}selected{{end}}>Cancelled</option>
+                    </select>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <button onclick="viewOrder('{{.ID}}')" class="text-indigo-600 hover:text-indigo-900 font-medium">Details</button>
+                </td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-gray-500">No orders found.</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{{if .Pagination}}
+<div class="mt-4 flex items-center justify-between bg-white rounded-lg shadow px-6 py-3">
+    <div class="text-sm text-gray-600">
+        Total: {{.Pagination.TotalItems}} items
+    </div>
+    <div class="flex items-center gap-2">
+        {{if gt .Pagination.Page 1}}
+        <a href="?page={{subtract .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}&search={{.Search}}"
+            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Previous</a>
+        {{else}}
+        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
+        {{end}}
+
+        <span class="px-3 py-1 text-sm text-gray-700">Page {{.Pagination.Page}} of {{.Pagination.TotalPages}}</span>
+
+        {{if lt .Pagination.Page .Pagination.TotalPages}}
+        <a href="?page={{add .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}&search={{.Search}}"
+            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Next</a>
+        {{else}}
+        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+<!-- Order Detail Modal -->
+<div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Order Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div id="order-detail-content">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateOrderStatus(id, status) {
+    $.ajax({
+        url: '/api/admin/orders/' + id + '/status',
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ status: status }),
+        success: function() {
+            var row = $('#order-row-' + id);
+            row.css('background-color', '#f0fdf4');
+            setTimeout(function() { row.css('background-color', ''); }, 1000);
+        },
+        error: function(xhr) {
+            alert(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to update status');
+            location.reload();
+        }
+    });
+}
+
+function viewOrder(id) {
+    $('#order-modal').removeClass('hidden');
+    $('#order-detail-content').html('<p class="text-gray-500">Loading...</p>');
+
+    $.getJSON('/api/admin/orders/' + id, function(response) {
+        var order = response.data;
+        var html = '<div class="space-y-4">';
+        html += '<div class="grid grid-cols-2 gap-4 text-sm">';
+        html += '<div><span class="text-gray-500">Status:</span> <span class="font-medium">' + order.status + '</span></div>';
+        html += '<div><span class="text-gray-500">Total:</span> <span class="font-medium">฿' + order.total_amount.toFixed(2) + '</span></div>';
+        if (order.user_email) {
+            html += '<div><span class="text-gray-500">Customer:</span> <span class="font-medium">' + order.user_email + '</span></div>';
+        }
+        if (order.shipping_address) {
+            html += '<div class="col-span-2"><span class="text-gray-500">Address:</span> <span class="font-medium">' + order.shipping_address + '</span></div>';
+        }
+        html += '</div>';
+
+        if (order.items && order.items.length > 0) {
+            html += '<table class="min-w-full divide-y divide-gray-200 mt-4">';
+            html += '<thead class="bg-gray-50"><tr>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Product</th>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Qty</th>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Price</th>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Subtotal</th>';
+            html += '</tr></thead><tbody class="divide-y divide-gray-200">';
+            order.items.forEach(function(item) {
+                html += '<tr>';
+                html += '<td class="px-4 py-2 text-sm">' + item.product_name + '</td>';
+                html += '<td class="px-4 py-2 text-sm">' + item.quantity + '</td>';
+                html += '<td class="px-4 py-2 text-sm">฿' + item.unit_price.toFixed(2) + '</td>';
+                html += '<td class="px-4 py-2 text-sm font-medium">฿' + item.subtotal.toFixed(2) + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+        }
+        html += '</div>';
+        $('#order-detail-content').html(html);
+    }).fail(function() {
+        $('#order-detail-content').html('<p class="text-red-500">Failed to load order details</p>');
+    });
+}
+
+function closeModal() {
+    $('#order-modal').addClass('hidden');
+}
+
+$('#order-modal').on('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - ShopOnline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-indigo-600">ShopOnline</a>
+                    <div class="ml-10 flex space-x-4">
+                        <a href="/" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="/products" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Products</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4" id="nav-actions">
+                    <a href="/cart" class="relative text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        🛒 Cart <span id="cart-count" class="bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 ml-1">0</span>
+                    </a>
+                    <span id="auth-nav"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {{embed}}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-500 text-sm">&copy; 2024 ShopOnline. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    $(document).ready(function() {
+        $.getJSON('/api/auth/me', function(response) {
+            if (response.data) {
+                var html = '<span class="text-sm text-gray-600">Hi, ' + response.data.full_name + '</span>';
+                html += ' <button onclick="logout()" class="text-sm text-red-600 hover:text-red-800 ml-2">Logout</button>';
+                if (response.data.role_name === 'admin') {
+                    html += ' <a href="/admin" class="text-sm text-indigo-600 hover:text-indigo-800 ml-2">Admin</a>';
+                }
+                $('#auth-nav').html(html);
+                $.getJSON('/api/cart/count', function(data) {
+                    $('#cart-count').text(data.count || 0);
+                });
+            } else {
+                showLoginLinks();
+            }
+        }).fail(function() {
+            showLoginLinks();
+        });
+
+        function showLoginLinks() {
+            $('#auth-nav').html(
+                '<a href="/login" class="text-gray-700 hover:text-indigo-600 text-sm font-medium">Login</a>' +
+                ' <a href="/register" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 ml-2">Register</a>'
+            );
+        }
+    });
+
+    function logout() {
+        localStorage.removeItem('token');
+        $.post('/api/auth/logout', function() {
+            window.location.href = '/';
+        });
+    }
+    </script>
+</body>
+</html>

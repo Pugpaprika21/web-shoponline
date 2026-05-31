@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 min-h-screen fixed">
+            <div class="p-4">
+                <a href="/admin" class="text-white text-xl font-bold">Admin Panel</a>
+            </div>
+            <nav class="mt-4" id="admin-sidebar">
+                <a href="/admin" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/admin/products" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">inventory_2</span>
+                    <span>Products</span>
+                </a>
+                <a href="/admin/inventory" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">warehouse</span>
+                    <span>Inventory</span>
+                </a>
+                <a href="/admin/orders" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">shopping_cart</span>
+                    <span>Orders</span>
+                </a>
+                <a href="/admin/users" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">people</span>
+                    <span>Users</span>
+                </a>
+                <hr class="border-gray-700 my-4">
+                <div class="px-4 py-2 text-gray-500 text-xs uppercase tracking-wider">Settings</div>
+                <a href="/admin/settings/menus" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">menu</span>
+                    <span>Menus</span>
+                </a>
+                <a href="/admin/settings/roles" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">admin_panel_settings</span>
+                    <span>Roles</span>
+                </a>
+                <a href="/admin/settings/store" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">storefront</span>
+                    <span>Store</span>
+                </a>
+                <hr class="border-gray-700 my-4">
+                <a href="/" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <span class="material-icons mr-3 text-sm">arrow_back</span>
+                    <span>Back to Store</span>
+                </a>
+                <button onclick="logout()" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white w-full text-left">
+                    <span class="material-icons mr-3 text-sm">logout</span>
+                    <span>Logout</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="ml-64 flex-1 p-8">
+            {{embed}}
+        </main>
+    </div>
+
+    <script>
+    function logout() {
+        localStorage.removeItem('token');
+        $.post('/api/auth/logout', function() {
+            window.location.href = '/admin/login';
+        });
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
+    <div id="cart-content">
+        <div class="text-center py-8">
+            <p class="text-gray-500">Loading cart...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    loadCart();
+});
+
+function loadCart() {
+    $.getJSON('/api/cart', function(response) {
+        var cart = response.data;
+        if (!cart || !cart.items || cart.items.length === 0) {
+            $('#cart-content').html(
+                '<div class="bg-white rounded-lg shadow p-12 text-center">' +
+                '<p class="text-gray-500 text-lg mb-4">Your cart is empty</p>' +
+                '<a href="/products" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition inline-block">Browse Products</a>' +
+                '</div>'
+            );
+            return;
+        }
+
+        var html = '<div class="bg-white rounded-lg shadow overflow-hidden">';
+        html += '<table class="min-w-full divide-y divide-gray-200">';
+        html += '<thead class="bg-gray-50"><tr>';
+        html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>';
+        html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>';
+        html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>';
+        html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>';
+        html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>';
+        html += '</tr></thead><tbody class="divide-y divide-gray-200">';
+
+        cart.items.forEach(function(item) {
+            html += '<tr id="cart-item-' + item.id + '">';
+            html += '<td class="px-6 py-4"><div class="flex items-center">';
+            if (item.image_url) {
+                html += '<img src="' + item.image_url + '" class="w-10 h-10 rounded object-cover mr-3">';
+            } else {
+                html += '<span class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center mr-3">📦</span>';
+            }
+            html += '<span class="text-sm font-medium text-gray-900">' + item.product_name + '</span>';
+            html += '</div></td>';
+            html += '<td class="px-6 py-4 text-sm text-gray-900">฿' + item.unit_price.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-4 text-sm text-gray-900">' + item.quantity + '</td>';
+            html += '<td class="px-6 py-4 text-sm font-medium text-gray-900">฿' + item.subtotal.toFixed(2) + '</td>';
+            html += '<td class="px-6 py-4"><button onclick="removeItem(\'' + item.id + '\')" class="text-red-600 hover:text-red-900 text-sm font-medium">Remove</button></td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        html += '<div class="p-6 bg-gray-50 flex justify-between items-center border-t">';
+        html += '<div><span class="text-gray-600">Total Items: ' + cart.total_items + '</span></div>';
+        html += '<div class="flex items-center gap-4">';
+        html += '<span class="text-xl font-bold text-gray-900">Total: ฿' + cart.total_price.toFixed(2) + '</span>';
+        html += '<button onclick="alert(\'Checkout coming soon!\')" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-medium">Checkout</button>';
+        html += '</div></div></div>';
+
+        $('#cart-content').html(html);
+    }).fail(function(xhr) {
+        if (xhr.status === 401) {
+            $('#cart-content').html(
+                '<div class="bg-white rounded-lg shadow p-12 text-center">' +
+                '<p class="text-gray-500 text-lg mb-4">Please login to view your cart</p>' +
+                '<a href="/login" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition inline-block">Login</a>' +
+                '</div>'
+            );
+        }
+    });
+}
+
+function removeItem(itemId) {
+    $.ajax({
+        url: '/api/cart/items/' + itemId,
+        method: 'DELETE',
+        success: function() {
+            loadCart();
+            $.getJSON('/api/cart/count', function(data) {
+                $('#cart-count').text(data.count || 0);
+            });
+        },
+        error: function() {
+            alert('Failed to remove item');
+        }
+    });
+}
+</script>

@@ -1,0 +1,192 @@
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Store Settings</h2>
+    <button onclick="saveSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center gap-2">
+        <span class="material-icons text-sm">save</span> Save Settings
+    </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- General Settings -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">General</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                <input type="text" id="store_name" value="{{.Settings.StoreName}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+                <input type="text" id="store_logo_url" value="{{.Settings.StoreLogoURL}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                {{if .Settings.StoreLogoURL}}
+                <img src="{{.Settings.StoreLogoURL}}" alt="Logo Preview" class="mt-2 h-16 object-contain rounded border">
+                {{end}}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Banner URL</label>
+                <input type="text" id="store_banner_url" value="{{.Settings.StoreBannerURL}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                {{if .Settings.StoreBannerURL}}
+                <img src="{{.Settings.StoreBannerURL}}" alt="Banner Preview" class="mt-2 h-24 w-full object-cover rounded border">
+                {{end}}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Footer Text</label>
+                <textarea id="footer_text" rows="2"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.FooterText}}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colors -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Colors</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="primary_color" value="{{.Settings.PrimaryColor}}"
+                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer">
+                    <input type="text" id="primary_color_text" value="{{.Settings.PrimaryColor}}"
+                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                        onchange="document.getElementById('primary_color').value = this.value">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="secondary_color" value="{{.Settings.SecondaryColor}}"
+                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer">
+                    <input type="text" id="secondary_color_text" value="{{.Settings.SecondaryColor}}"
+                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                        onchange="document.getElementById('secondary_color').value = this.value">
+                </div>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 mt-8">Social Media</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+                <input type="text" id="social_facebook" value="{{.Settings.SocialFacebook}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://facebook.com/yourpage">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Line ID</label>
+                <input type="text" id="social_line" value="{{.Settings.SocialLine}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="@yourlineid">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+                <input type="text" id="social_instagram" value="{{.Settings.SocialInstagram}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://instagram.com/yourpage">
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input type="text" id="contact_phone" value="{{.Settings.ContactPhone}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="0xx-xxx-xxxx">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="text" id="contact_email" value="{{.Settings.ContactEmail}}"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="contact@yourstore.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea id="contact_address" rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Store address">{{.Settings.ContactAddress}}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Preview</h3>
+        <div class="border rounded-lg overflow-hidden">
+            <div id="preview-banner" class="h-24 bg-gray-200 flex items-center justify-center text-gray-400">
+                {{if .Settings.StoreBannerURL}}
+                <img src="{{.Settings.StoreBannerURL}}" class="w-full h-full object-cover">
+                {{else}}
+                <span>No banner set</span>
+                {{end}}
+            </div>
+            <div id="preview-header" class="p-4 text-white flex items-center gap-3" style="background-color: {{.Settings.PrimaryColor}}">
+                {{if .Settings.StoreLogoURL}}
+                <img src="{{.Settings.StoreLogoURL}}" class="h-8 w-8 object-contain rounded">
+                {{end}}
+                <span class="font-bold" id="preview-name">{{.Settings.StoreName}}</span>
+            </div>
+            <div class="p-4 text-sm text-gray-600">
+                <p id="preview-footer">{{.Settings.FooterText}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-opacity">
+    Settings saved successfully!
+</div>
+
+<script>
+// Sync color pickers with text inputs
+$('#primary_color').on('input', function() {
+    $('#primary_color_text').val($(this).val());
+});
+$('#secondary_color').on('input', function() {
+    $('#secondary_color_text').val($(this).val());
+});
+
+function saveSettings() {
+    var data = {
+        store_name: $('#store_name').val(),
+        store_logo_url: $('#store_logo_url').val(),
+        store_banner_url: $('#store_banner_url').val(),
+        primary_color: $('#primary_color').val(),
+        secondary_color: $('#secondary_color').val(),
+        footer_text: $('#footer_text').val(),
+        social_facebook: $('#social_facebook').val(),
+        social_line: $('#social_line').val(),
+        social_instagram: $('#social_instagram').val(),
+        contact_phone: $('#contact_phone').val(),
+        contact_email: $('#contact_email').val(),
+        contact_address: $('#contact_address').val()
+    };
+
+    $.ajax({
+        url: '/api/admin/settings/store',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function() {
+            // Show toast
+            $('#toast').removeClass('hidden');
+            setTimeout(function() {
+                $('#toast').addClass('hidden');
+            }, 3000);
+            // Update preview
+            $('#preview-name').text(data.store_name);
+            $('#preview-footer').text(data.footer_text);
+            $('#preview-header').css('background-color', data.primary_color);
+        },
+        error: function(xhr) {
+            alert(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings');
+        }
+    });
+}
+</script>

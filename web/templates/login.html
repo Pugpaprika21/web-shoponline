@@ -1,0 +1,65 @@
+<div class="max-w-md mx-auto mt-16">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Login</h2>
+
+        <div id="login-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+        <div id="login-success" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
+
+        <form id="login-form">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" name="email" required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="your@email.com">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <input type="password" name="password" required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="••••••••">
+            </div>
+            <button type="submit" id="login-btn"
+                class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-medium">
+                Login
+            </button>
+        </form>
+
+        <p class="text-center text-gray-500 text-sm mt-4">
+            Don't have an account? <a href="/register" class="text-indigo-600 hover:underline">Register</a>
+        </p>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#login-form').on('submit', function(e) {
+        e.preventDefault();
+        $('#login-error').addClass('hidden');
+        $('#login-btn').prop('disabled', true).text('Logging in...');
+
+        $.ajax({
+            url: '/api/auth/login',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                email: $('input[name="email"]').val(),
+                password: $('input[name="password"]').val()
+            }),
+            success: function(response) {
+                if (response.token) {
+                    localStorage.setItem('token', response.token);
+                }
+                $('#login-success').text('Login successful! Redirecting...').removeClass('hidden');
+                setTimeout(function() {
+                    window.location.href = '/products';
+                }, 500);
+            },
+            error: function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.error : 'Login failed';
+                $('#login-error').text(error).removeClass('hidden');
+                $('#login-btn').prop('disabled', false).text('Login');
+            }
+        });
+    });
+});
+</script>

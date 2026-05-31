@@ -1,0 +1,77 @@
+<!-- Hero Section -->
+<div class="text-center py-16">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to ShopOnline</h1>
+    <p class="text-xl text-gray-600 mb-8">Discover amazing products at great prices</p>
+    <a href="/products" class="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-indigo-700 transition">
+        Browse Products
+    </a>
+</div>
+
+<!-- Featured Categories -->
+<div class="mt-12">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Shop by Category</h2>
+    <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Loaded via JS -->
+    </div>
+</div>
+
+<!-- Latest Products -->
+<div class="mt-12">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Latest Products</h2>
+    <div id="latest-products" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Loaded via JS -->
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Load products
+    $.getJSON('/api/products', function(response) {
+        var products = response.data || [];
+        if (products.length === 0) {
+            $('#latest-products').html('<p class="col-span-full text-center text-gray-500">No products yet.</p>');
+            return;
+        }
+        var html = '';
+        products.slice(0, 8).forEach(function(p) {
+            html += '<div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">';
+            html += '<div class="h-40 bg-gray-200 flex items-center justify-center">';
+            if (p.image_url) {
+                html += '<img src="' + p.image_url + '" alt="' + p.name + '" class="h-full w-full object-cover">';
+            } else {
+                html += '<span class="text-gray-400 text-3xl">📦</span>';
+            }
+            html += '</div>';
+            html += '<div class="p-4">';
+            html += '<h3 class="text-sm font-semibold text-gray-800 truncate">' + p.name + '</h3>';
+            html += '<div class="mt-2 flex items-center justify-between">';
+            html += '<span class="text-lg font-bold text-indigo-600">฿' + p.price.toFixed(2) + '</span>';
+            html += '<button onclick="addToCart(\'' + p.id + '\')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">Add</button>';
+            html += '</div></div></div>';
+        });
+        $('#latest-products').html(html);
+    });
+});
+
+function addToCart(productId) {
+    $.ajax({
+        url: '/api/cart/items',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ product_id: productId, quantity: 1 }),
+        success: function() {
+            $.getJSON('/api/cart/count', function(data) {
+                $('#cart-count').text(data.count || 0);
+            });
+            alert('Added to cart!');
+        },
+        error: function(xhr) {
+            if (xhr.status === 401) {
+                window.location.href = '/login';
+            } else {
+                alert(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to add to cart');
+            }
+        }
+    });
+}
+</script>
