@@ -11,6 +11,8 @@ services:
       - .env
     environment:
       - DB_HOST=postgres
+    volumes:
+      - uploads:/app/web/static/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,3 +49,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

@@ -22,3 +22,7 @@ Thumbs.db
 
 # Vendor (optional)
 # vendor/
+
+# Uploads (keep folder, ignore files)
+web/static/uploads/*
+!web/static/uploads/.gitkeep

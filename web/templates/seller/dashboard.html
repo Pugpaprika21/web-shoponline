@@ -1,0 +1,115 @@
+<div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Seller Dashboard</h1>
+
+    {{if not .Shop}}
+    <!-- No shop yet -->
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <span class="material-icons text-6xl text-teal-400 mb-4">storefront</span>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">Welcome! You don't have a shop yet.</h2>
+        <p class="text-gray-500 mb-6">Create your shop to start selling products.</p>
+        <button onclick="showCreateShopModal()" class="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition font-medium">
+            <span class="material-icons align-middle mr-1">add_business</span>
+            Create My Shop
+        </button>
+    </div>
+
+    <!-- Create Shop Modal -->
+    <div id="createShopModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">Create Your Shop</h3>
+            <form id="createShopForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Shop Name *</label>
+                    <input type="text" name="name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="My Awesome Shop">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Tell customers about your shop..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="hideCreateShopModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition">Create Shop</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function showCreateShopModal() {
+        document.getElementById('createShopModal').classList.remove('hidden');
+    }
+    function hideCreateShopModal() {
+        document.getElementById('createShopModal').classList.add('hidden');
+    }
+    $('#createShopForm').on('submit', function(e) {
+        e.preventDefault();
+        var data = {
+            name: this.name.value,
+            description: this.description.value
+        };
+        api('POST', '/api/seller/shop', data).done(function(res) {
+            showSuccess('Shop created successfully!');
+            setTimeout(function() { window.location.reload(); }, 1000);
+        }).fail(function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to create shop';
+            showError(msg);
+        });
+    });
+    </script>
+
+    {{else}}
+    <!-- Dashboard overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Products</p>
+                    <p class="text-3xl font-bold text-gray-800">{{.ProductCount}}</p>
+                </div>
+                <span class="material-icons text-4xl text-teal-400">inventory_2</span>
+            </div>
+            <a href="/seller/products" class="text-teal-600 text-sm mt-2 inline-block hover:underline">Manage Products →</a>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Orders</p>
+                    <p class="text-3xl font-bold text-gray-800">{{.OrderCount}}</p>
+                </div>
+                <span class="material-icons text-4xl text-orange-400">shopping_cart</span>
+            </div>
+            <a href="/seller/orders" class="text-teal-600 text-sm mt-2 inline-block hover:underline">View Orders →</a>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Shop Status</p>
+                    <p class="text-lg font-semibold {{if .Shop.IsActive}}text-green-600{{else}}text-red-600{{end}}">
+                        {{if .Shop.IsActive}}Active{{else}}Inactive{{end}}
+                    </p>
+                </div>
+                <span class="material-icons text-4xl text-green-400">verified</span>
+            </div>
+            <a href="/seller/shop" class="text-teal-600 text-sm mt-2 inline-block hover:underline">Shop Settings →</a>
+        </div>
+    </div>
+
+    <!-- Shop info card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Shop Info</h2>
+        <div class="flex items-center gap-4">
+            {{if .Shop.LogoURL}}
+            <img src="{{.Shop.LogoURL}}" alt="Shop Logo" class="w-16 h-16 rounded-full object-cover">
+            {{else}}
+            <div class="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
+                <span class="material-icons text-teal-600 text-2xl">storefront</span>
+            </div>
+            {{end}}
+            <div>
+                <h3 class="font-semibold text-gray-800">{{.Shop.Name}}</h3>
+                <p class="text-sm text-gray-500">{{.Shop.Description}}</p>
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>

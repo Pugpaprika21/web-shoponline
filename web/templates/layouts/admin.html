@@ -6,72 +6,166 @@
     <title>{{.Title}} - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .submenu.open { max-height: 500px; }
+        .menu-arrow { transition: transform 0.3s ease; }
+        .menu-arrow.open { transform: rotate(90deg); }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- Mobile header -->
+    <div class="md:hidden fixed top-0 left-0 right-0 bg-indigo-900 h-14 flex items-center justify-between px-4 z-40">
+        <div class="flex items-center">
+            <button onclick="toggleSidebar()" class="text-white p-1" aria-label="Toggle sidebar">
+                <span class="material-icons">menu</span>
+            </button>
+            <a href="/admin" class="text-white font-bold ml-3 text-lg">Admin Panel</a>
+        </div>
+        <button onclick="logout()" class="text-indigo-200 hover:text-white p-1" aria-label="Logout">
+            <span class="material-icons text-sm">logout</span>
+        </button>
+    </div>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
+
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 min-h-screen fixed">
+        <aside id="admin-sidebar-container" class="w-64 bg-indigo-900 min-h-screen fixed overflow-y-auto z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="p-4">
-                <a href="/admin" class="text-white text-xl font-bold">Admin Panel</a>
+                <a href="/admin" class="text-white text-xl font-bold flex items-center gap-2">
+                    <span class="material-icons">store</span> Admin Panel
+                </a>
             </div>
             <nav class="mt-4" id="admin-sidebar">
-                <a href="/admin" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">dashboard</span>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/admin/products" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">inventory_2</span>
-                    <span>Products</span>
-                </a>
-                <a href="/admin/inventory" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">warehouse</span>
-                    <span>Inventory</span>
-                </a>
-                <a href="/admin/orders" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">shopping_cart</span>
-                    <span>Orders</span>
-                </a>
-                <a href="/admin/users" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">people</span>
-                    <span>Users</span>
-                </a>
-                <hr class="border-gray-700 my-4">
-                <div class="px-4 py-2 text-gray-500 text-xs uppercase tracking-wider">Settings</div>
-                <a href="/admin/settings/menus" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">menu</span>
-                    <span>Menus</span>
-                </a>
-                <a href="/admin/settings/roles" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">admin_panel_settings</span>
-                    <span>Roles</span>
-                </a>
-                <a href="/admin/settings/store" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
-                    <span class="material-icons mr-3 text-sm">storefront</span>
-                    <span>Store</span>
-                </a>
-                <hr class="border-gray-700 my-4">
-                <a href="/" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white">
+                <div class="px-4 py-3 text-indigo-400 text-xs">Loading menus...</div>
+            </nav>
+            <!-- Fixed bottom actions -->
+            <div class="mt-4 border-t border-indigo-700 pt-2">
+                <a href="/" class="flex items-center px-4 py-3 text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
                     <span class="material-icons mr-3 text-sm">arrow_back</span>
                     <span>Back to Store</span>
                 </a>
-                <button onclick="logout()" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white w-full text-left">
+                <button onclick="logout()" class="flex items-center px-4 py-3 text-indigo-200 hover:bg-indigo-800 hover:text-white w-full text-left transition">
                     <span class="material-icons mr-3 text-sm">logout</span>
                     <span>Logout</span>
                 </button>
-            </nav>
+            </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="ml-64 flex-1 p-8">
+        <main class="flex-1 p-4 sm:p-6 md:p-8 md:ml-64 mt-14 md:mt-0 min-w-0">
             {{embed}}
         </main>
     </div>
 
+    <script src="/static/js/app.js"></script>
     <script>
+    $(document).ready(function() {
+        loadSidebarMenus();
+    });
+
+    function toggleSidebar() {
+        var sidebar = document.getElementById('admin-sidebar-container');
+        var overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    function loadSidebarMenus() {
+        api('GET', '/api/admin/menus').done(function(response) {
+            var menus = response.data || [];
+            var html = '';
+            var currentPath = window.location.pathname;
+
+            menus.forEach(function(menu) {
+                if (!menu.is_active) return;
+                html += renderMenuItem(menu, currentPath);
+            });
+
+            if (html === '') {
+                html = '<div class="px-4 py-3 text-indigo-400 text-xs">No menus configured</div>';
+            }
+
+            $('#admin-sidebar').html(html);
+
+            // Auto-open submenu that contains active page
+            $('.submenu').each(function() {
+                if ($(this).find('a.active-link').length > 0) {
+                    $(this).addClass('open');
+                    $(this).prev().find('.menu-arrow').addClass('open');
+                }
+            });
+        }).fail(function() {
+            $('#admin-sidebar').html('<div class="px-4 py-3 text-red-300 text-xs">Failed to load menus</div>');
+        });
+    }
+
+    function renderMenuItem(menu, currentPath) {
+        var html = '';
+        var hasChildren = menu.children && menu.children.length > 0;
+
+        if (hasChildren) {
+            // Parent with submenu
+            var isChildActive = menu.children.some(function(c) { return c.url === currentPath; });
+            var parentActive = isChildActive ? 'text-white' : 'text-indigo-200';
+            var arrowOpen = isChildActive ? 'open' : '';
+            var submenuOpen = isChildActive ? 'open' : '';
+
+            html += '<div class="menu-parent">';
+            html += '<button onclick="toggleSubmenu(this)" class="flex items-center justify-between w-full px-4 py-2.5 ' + parentActive + ' hover:bg-indigo-800 hover:text-white transition">';
+            html += '<div class="flex items-center">';
+            if (menu.icon) html += '<span class="material-icons mr-3 text-sm">' + menu.icon + '</span>';
+            html += '<span>' + menu.name + '</span>';
+            html += '</div>';
+            html += '<span class="material-icons text-sm menu-arrow ' + arrowOpen + '">chevron_right</span>';
+            html += '</button>';
+            html += '<div class="submenu ' + submenuOpen + '">';
+
+            menu.children.forEach(function(child) {
+                if (!child.is_active) return;
+                var active = currentPath === child.url ? 'bg-indigo-800 text-white active-link' : 'text-indigo-300';
+                html += '<a href="' + child.url + '" class="flex items-center pl-12 pr-4 py-2 ' + active + ' hover:bg-indigo-800 hover:text-white transition text-sm">';
+                if (child.icon) html += '<span class="material-icons mr-2 text-xs">' + child.icon + '</span>';
+                html += '<span>' + child.name + '</span></a>';
+
+                // Support nested sub-submenu (level 3)
+                if (child.children && child.children.length > 0) {
+                    child.children.forEach(function(grandchild) {
+                        if (!grandchild.is_active) return;
+                        var gcActive = currentPath === grandchild.url ? 'bg-indigo-800 text-white active-link' : 'text-indigo-400';
+                        html += '<a href="' + grandchild.url + '" class="flex items-center pl-16 pr-4 py-1.5 ' + gcActive + ' hover:bg-indigo-800 hover:text-white transition text-xs">';
+                        if (grandchild.icon) html += '<span class="material-icons mr-2" style="font-size:12px">' + grandchild.icon + '</span>';
+                        html += '<span>' + grandchild.name + '</span></a>';
+                    });
+                }
+            });
+
+            html += '</div></div>';
+        } else {
+            // Single menu item (no children)
+            var active = currentPath === menu.url ? 'bg-indigo-800 text-white active-link' : 'text-indigo-200';
+            html += '<a href="' + menu.url + '" class="flex items-center px-4 py-2.5 ' + active + ' hover:bg-indigo-800 hover:text-white transition">';
+            if (menu.icon) html += '<span class="material-icons mr-3 text-sm">' + menu.icon + '</span>';
+            html += '<span>' + menu.name + '</span></a>';
+        }
+
+        return html;
+    }
+
+    function toggleSubmenu(btn) {
+        var submenu = $(btn).next('.submenu');
+        var arrow = $(btn).find('.menu-arrow');
+        submenu.toggleClass('open');
+        arrow.toggleClass('open');
+    }
+
     function logout() {
-        localStorage.removeItem('token');
-        $.post('/api/auth/logout', function() {
+        api('POST', '/api/auth/logout').always(function() {
+            localStorage.removeItem('token');
             window.location.href = '/admin/login';
         });
     }

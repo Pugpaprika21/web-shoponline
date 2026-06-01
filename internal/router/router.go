@@ -4,22 +4,35 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"web-shoponline/internal/config"
-	"web-shoponline/internal/handler"
+	handlerAuth "web-shoponline/internal/handler/auth"
+	handlerCart "web-shoponline/internal/handler/cart"
+	handlerInventory "web-shoponline/internal/handler/inventory"
+	handlerMenu "web-shoponline/internal/handler/menu"
+	handlerOrder "web-shoponline/internal/handler/order"
+	handlerPage "web-shoponline/internal/handler/page"
+	handlerProduct "web-shoponline/internal/handler/product"
+	handlerRole "web-shoponline/internal/handler/role"
+	handlerSeller "web-shoponline/internal/handler/seller"
+	handlerShop "web-shoponline/internal/handler/shop"
+	handlerStoreSetting "web-shoponline/internal/handler/store_setting"
+	handlerUser "web-shoponline/internal/handler/user"
 	"web-shoponline/internal/middleware"
 )
 
 // Handlers holds all handler instances
 type Handlers struct {
-	Page         *handler.PageHandler
-	Auth         *handler.AuthHandler
-	Product      *handler.ProductHandler
-	Cart         *handler.CartHandler
-	Order        *handler.OrderHandler
-	Inventory    *handler.InventoryHandler
-	Menu         *handler.MenuHandler
-	Role         *handler.RoleHandler
-	User         *handler.UserHandler
-	StoreSetting *handler.StoreSettingHandler
+	Page         *handlerPage.Handler
+	Auth         *handlerAuth.Handler
+	Product      *handlerProduct.Handler
+	Cart         *handlerCart.Handler
+	Order        *handlerOrder.Handler
+	Inventory    *handlerInventory.Handler
+	Menu         *handlerMenu.Handler
+	Role         *handlerRole.Handler
+	User         *handlerUser.Handler
+	StoreSetting *handlerStoreSetting.Handler
+	Shop         *handlerShop.Handler
+	Seller       *handlerSeller.Handler
 }
 
 // Setup configures all application routes
@@ -30,6 +43,8 @@ func Setup(app *fiber.App, h *Handlers, jwtCfg config.JWTConfig) {
 	// --- Public Pages ---
 	app.Get("/", h.Page.RenderHomePage)
 	app.Get("/products", h.Product.RenderProductsPage)
+	app.Get("/products/:id", h.Product.RenderProductDetailPage)
+	app.Get("/shops/:slug", h.Shop.RenderShopPage)
 	app.Get("/login", h.Auth.RenderLoginPage)
 	app.Get("/register", h.Auth.RenderRegisterPage)
 	app.Get("/cart", h.Cart.RenderCartPage)
@@ -41,13 +56,17 @@ func Setup(app *fiber.App, h *Handlers, jwtCfg config.JWTConfig) {
 	api := app.Group("/api")
 	api.Get("/products", h.Product.GetAllProducts)
 	api.Get("/products/:id", h.Product.GetProductByID)
+	api.Get("/store-info", h.StoreSetting.GetPublicStoreInfo)
 
 	// Auth API (no auth required)
 	auth := api.Group("/auth")
 	auth.Post("/login", h.Auth.Login)
 	auth.Post("/register", h.Auth.Register)
-	auth.Post("/logout", h.Auth.Logout)
 	auth.Get("/me", h.Auth.GetCurrentUser)
+
+	// Auth API (requires JWT)
+	authProtected := api.Group("/auth", middleware.RequireJWT(jwtCfg))
+	authProtected.Post("/logout", h.Auth.Logout)
 
 	// Cart API (requires JWT auth)
 	cart := api.Group("/cart", middleware.RequireJWT(jwtCfg))
@@ -106,4 +125,28 @@ func Setup(app *fiber.App, h *Handlers, jwtCfg config.JWTConfig) {
 	// Store Settings
 	adminAPI.Get("/settings/store", h.StoreSetting.GetStoreSettings)
 	adminAPI.Put("/settings/store", h.StoreSetting.UpdateStoreSettings)
+
+	// File Upload
+	adminAPI.Post("/upload", h.StoreSetting.UploadImage)
+
+	// --- Seller Pages (requires seller JWT) ---
+	seller := app.Group("/seller", middleware.RequireSellerJWT(jwtCfg))
+	seller.Get("/", h.Seller.RenderSellerDashboard)
+	seller.Get("/shop", h.Seller.RenderSellerShopSettings)
+	seller.Get("/products", h.Seller.RenderSellerProducts)
+	seller.Get("/orders", h.Seller.RenderSellerOrders)
+
+	// --- Seller API (requires seller JWT) ---
+	sellerAPI := api.Group("/seller", middleware.RequireSellerJWT(jwtCfg))
+	sellerAPI.Get("/shop", h.Seller.GetMyShop)
+	sellerAPI.Post("/shop", h.Seller.CreateMyShop)
+	sellerAPI.Put("/shop", h.Seller.UpdateMyShop)
+	sellerAPI.Get("/products", h.Seller.GetMyProducts)
+	sellerAPI.Post("/products", h.Seller.CreateProduct)
+	sellerAPI.Put("/products/:id", h.Seller.UpdateProduct)
+	sellerAPI.Delete("/products/:id", h.Seller.DeleteProduct)
+	sellerAPI.Get("/orders", h.Seller.GetMyOrders)
+
+	// Seller file upload (reuse same upload logic)
+	sellerAPI.Post("/upload", h.StoreSetting.UploadImage)
 }

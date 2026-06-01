@@ -3,6 +3,8 @@ package dto
 // ProductResponse is the DTO for returning product data to the client
 type ProductResponse struct {
 	ID            string  `json:"id"`
+	ShopID        string  `json:"shop_id,omitempty"`
+	ShopName      string  `json:"shop_name,omitempty"`
 	CategoryID    string  `json:"category_id,omitempty"`
 	CategoryName  string  `json:"category_name,omitempty"`
 	Name          string  `json:"name"`
@@ -16,12 +18,13 @@ type ProductResponse struct {
 
 // CreateProductRequest is the DTO for creating a new product
 type CreateProductRequest struct {
+	ShopID      string  `json:"shop_id" form:"shop_id" validate:"required,uuid"`
 	CategoryID  string  `json:"category_id" form:"category_id" validate:"omitempty,uuid"`
 	Name        string  `json:"name" form:"name" validate:"required,min=2,max=255"`
 	Description string  `json:"description" form:"description" validate:"omitempty,max=2000"`
 	Price       float64 `json:"price" form:"price" validate:"required,gt=0"`
 	Stock       int     `json:"stock_quantity" form:"stock_quantity" validate:"required,gte=0"`
-	ImageURL    string  `json:"image_url" form:"image_url" validate:"omitempty,url"`
+	ImageURL    string  `json:"image_url" form:"image_url" validate:"omitempty"`
 	IsActive    bool    `json:"is_active" form:"is_active"`
 }
 

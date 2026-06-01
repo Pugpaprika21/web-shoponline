@@ -21,6 +21,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.Permission{},
 		&model.Role{},
 		&model.User{},
+		&model.Shop{},
 		&model.Category{},
 		&model.Product{},
 		&model.Inventory{},

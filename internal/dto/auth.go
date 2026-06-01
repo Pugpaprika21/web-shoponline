@@ -15,9 +15,9 @@ type RegisterRequest struct {
 
 // UserResponse is the DTO for returning user data
 type UserResponse struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	FullName string `json:"full_name"`
-	RoleName string `json:"role_name,omitempty"`
-	IsActive bool   `json:"is_active"`
+	ID        string   `json:"id"`
+	Email     string   `json:"email"`
+	FullName  string   `json:"full_name"`
+	RoleNames []string `json:"role_names,omitempty"`
+	IsActive  bool     `json:"is_active"`
 }

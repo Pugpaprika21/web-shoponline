@@ -23,6 +23,8 @@ func (Category) TableName() string {
 // Product represents the product database model
 type Product struct {
 	ID            string         `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ShopID        string         `gorm:"type:uuid;not null" json:"shop_id"`
+	Shop          Shop           `gorm:"foreignKey:ShopID" json:"shop,omitempty"`
 	CategoryID    *string        `gorm:"type:uuid" json:"category_id"`
 	Category      *Category      `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 	Name          string         `gorm:"type:varchar(255);not null" json:"name"`

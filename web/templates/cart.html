@@ -13,7 +13,7 @@ $(document).ready(function() {
 });
 
 function loadCart() {
-    $.getJSON('/api/cart', function(response) {
+    api('GET', '/api/cart').done(function(response) {
         var cart = response.data;
         if (!cart || !cart.items || cart.items.length === 0) {
             $('#cart-content').html(
@@ -26,6 +26,7 @@ function loadCart() {
         }
 
         var html = '<div class="bg-white rounded-lg shadow overflow-hidden">';
+        html += '<div class="overflow-x-auto">';
         html += '<table class="min-w-full divide-y divide-gray-200">';
         html += '<thead class="bg-gray-50"><tr>';
         html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>';
@@ -36,7 +37,7 @@ function loadCart() {
         html += '</tr></thead><tbody class="divide-y divide-gray-200">';
 
         cart.items.forEach(function(item) {
-            html += '<tr id="cart-item-' + item.id + '">';
+            html += '<tr id="cart-item-' + item.id + '" class="hover:bg-gray-50 transition">';
             html += '<td class="px-6 py-4"><div class="flex items-center">';
             if (item.image_url) {
                 html += '<img src="' + item.image_url + '" class="w-10 h-10 rounded object-cover mr-3">';
@@ -53,11 +54,12 @@ function loadCart() {
         });
 
         html += '</tbody></table>';
-        html += '<div class="p-6 bg-gray-50 flex justify-between items-center border-t">';
+        html += '</div>'; // close overflow-x-auto
+        html += '<div class="p-4 sm:p-6 bg-gray-50 flex flex-col sm:flex-row justify-between items-center border-t gap-3">';
         html += '<div><span class="text-gray-600">Total Items: ' + cart.total_items + '</span></div>';
         html += '<div class="flex items-center gap-4">';
         html += '<span class="text-xl font-bold text-gray-900">Total: ฿' + cart.total_price.toFixed(2) + '</span>';
-        html += '<button onclick="alert(\'Checkout coming soon!\')" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-medium">Checkout</button>';
+        html += '<button onclick="showSuccess(\'Checkout coming soon!\')" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-medium">Checkout</button>';
         html += '</div></div></div>';
 
         $('#cart-content').html(html);
@@ -74,18 +76,14 @@ function loadCart() {
 }
 
 function removeItem(itemId) {
-    $.ajax({
-        url: '/api/cart/items/' + itemId,
-        method: 'DELETE',
-        success: function() {
-            loadCart();
-            $.getJSON('/api/cart/count', function(data) {
-                $('#cart-count').text(data.count || 0);
-            });
-        },
-        error: function() {
-            alert('Failed to remove item');
-        }
+    api('DELETE', '/api/cart/items/' + itemId).done(function() {
+        showSuccess('Item removed');
+        loadCart();
+        $.getJSON('/api/cart/count', function(data) {
+            $('#cart-count').text(data.count || 0);
+        });
+    }).fail(function() {
+        showError('Failed to remove item');
     });
 }
 </script>

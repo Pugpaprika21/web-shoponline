@@ -15,10 +15,38 @@ import (
 
 	"web-shoponline/internal/config"
 	"web-shoponline/internal/database"
-	"web-shoponline/internal/handler"
-	"web-shoponline/internal/repository"
+	handlerAuth "web-shoponline/internal/handler/auth"
+	handlerCart "web-shoponline/internal/handler/cart"
+	handlerInventory "web-shoponline/internal/handler/inventory"
+	handlerMenu "web-shoponline/internal/handler/menu"
+	handlerOrder "web-shoponline/internal/handler/order"
+	handlerPage "web-shoponline/internal/handler/page"
+	handlerProduct "web-shoponline/internal/handler/product"
+	handlerRole "web-shoponline/internal/handler/role"
+	handlerSeller "web-shoponline/internal/handler/seller"
+	handlerShop "web-shoponline/internal/handler/shop"
+	handlerStoreSetting "web-shoponline/internal/handler/store_setting"
+	handlerUser "web-shoponline/internal/handler/user"
+	repoCart "web-shoponline/internal/repository/cart"
+	repoCategory "web-shoponline/internal/repository/category"
+	repoInventory "web-shoponline/internal/repository/inventory"
+	repoMenu "web-shoponline/internal/repository/menu"
+	repoOrder "web-shoponline/internal/repository/order"
+	repoProduct "web-shoponline/internal/repository/product"
+	repoRole "web-shoponline/internal/repository/role"
+	repoShop "web-shoponline/internal/repository/shop"
+	repoStoreSetting "web-shoponline/internal/repository/store_setting"
+	repoUser "web-shoponline/internal/repository/user"
 	"web-shoponline/internal/router"
-	"web-shoponline/internal/service"
+	svcAuth "web-shoponline/internal/service/auth"
+	svcCart "web-shoponline/internal/service/cart"
+	svcInventory "web-shoponline/internal/service/inventory"
+	svcMenu "web-shoponline/internal/service/menu"
+	svcOrder "web-shoponline/internal/service/order"
+	svcProduct "web-shoponline/internal/service/product"
+	svcRole "web-shoponline/internal/service/role"
+	svcStoreSetting "web-shoponline/internal/service/store_setting"
+	svcUser "web-shoponline/internal/service/user"
 )
 
 func main() {
@@ -51,6 +79,7 @@ func main() {
 	}
 	engine.AddFunc("add", func(a, b int) int { return a + b })
 	engine.AddFunc("subtract", func(a, b int) int { return a - b })
+	engine.AddFunc("multiply", func(a, b int) int { return a * b })
 
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
@@ -68,39 +97,42 @@ func main() {
 	}))
 
 	// Initialize repositories
-	userRepo := repository.NewUserRepository(db)
-	productRepo := repository.NewProductRepository(db)
-	categoryRepo := repository.NewCategoryRepository(db)
-	orderRepo := repository.NewOrderRepository(db)
-	cartRepo := repository.NewCartRepository(db)
-	inventoryRepo := repository.NewInventoryRepository(db)
-	roleRepo := repository.NewRoleRepository(db)
-	menuRepo := repository.NewMenuRepository(db)
-	storeSettingRepo := repository.NewStoreSettingRepository(db)
+	userRepo := repoUser.NewRepository(db)
+	productRepo := repoProduct.NewRepository(db)
+	categoryRepo := repoCategory.NewRepository(db)
+	orderRepo := repoOrder.NewRepository(db)
+	cartRepo := repoCart.NewRepository(db)
+	inventoryRepo := repoInventory.NewRepository(db)
+	roleRepo := repoRole.NewRepository(db)
+	menuRepo := repoMenu.NewRepository(db)
+	storeSettingRepo := repoStoreSetting.NewRepository(db)
+	shopRepo := repoShop.NewRepository(db)
 
 	// Initialize services
-	authService := service.NewAuthService(userRepo, roleRepo)
-	productService := service.NewProductService(productRepo, categoryRepo)
-	orderService := service.NewOrderService(orderRepo)
-	cartService := service.NewCartService(cartRepo, productRepo)
-	inventoryService := service.NewInventoryService(inventoryRepo, productRepo)
-	menuService := service.NewMenuService(menuRepo)
-	roleService := service.NewRoleService(roleRepo)
-	userService := service.NewUserService(userRepo)
-	storeSettingService := service.NewStoreSettingService(storeSettingRepo)
+	authService := svcAuth.NewService(userRepo, roleRepo)
+	productService := svcProduct.NewService(productRepo, categoryRepo)
+	orderService := svcOrder.NewService(orderRepo)
+	cartService := svcCart.NewService(cartRepo, productRepo)
+	inventoryService := svcInventory.NewService(inventoryRepo, productRepo)
+	menuService := svcMenu.NewService(menuRepo)
+	roleService := svcRole.NewService(roleRepo)
+	userService := svcUser.NewService(userRepo, roleRepo)
+	storeSettingService := svcStoreSetting.NewService(storeSettingRepo)
 
 	// Initialize handlers
 	handlers := &router.Handlers{
-		Page:         handler.NewPageHandler(),
-		Auth:         handler.NewAuthHandler(authService, cfg.JWT),
-		Product:      handler.NewProductHandler(productService),
-		Cart:         handler.NewCartHandler(cartService),
-		Order:        handler.NewOrderHandler(orderService),
-		Inventory:    handler.NewInventoryHandler(inventoryService, productService),
-		Menu:         handler.NewMenuHandler(menuService),
-		Role:         handler.NewRoleHandler(roleService),
-		User:         handler.NewUserHandler(userService, roleService),
-		StoreSetting: handler.NewStoreSettingHandler(storeSettingService),
+		Page:         handlerPage.NewHandler(),
+		Auth:         handlerAuth.NewHandler(authService, cfg.JWT),
+		Product:      handlerProduct.NewHandler(productService),
+		Cart:         handlerCart.NewHandler(cartService),
+		Order:        handlerOrder.NewHandler(orderService),
+		Inventory:    handlerInventory.NewHandler(inventoryService, productService),
+		Menu:         handlerMenu.NewHandler(menuService),
+		Role:         handlerRole.NewHandler(roleService),
+		User:         handlerUser.NewHandler(userService, roleService),
+		StoreSetting: handlerStoreSetting.NewHandler(storeSettingService),
+		Shop:         handlerShop.NewHandler(shopRepo, productRepo),
+		Seller:       handlerSeller.NewHandler(shopRepo, productRepo, orderRepo),
 	}
 
 	// Setup routes

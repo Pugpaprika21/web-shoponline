@@ -1,0 +1,133 @@
+<div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Shop Settings</h1>
+
+    {{if not .Shop}}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">You need to create a shop first.</p>
+        <a href="/seller" class="text-teal-600 hover:underline mt-2 inline-block">Go to Dashboard</a>
+    </div>
+    {{else}}
+    <div class="bg-white rounded-lg shadow p-6">
+        <form id="shopSettingsForm">
+            <!-- Banner Preview -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Shop Banner</label>
+                <div class="relative w-full h-40 bg-gray-200 rounded-lg overflow-hidden mb-2">
+                    <img id="bannerPreview" src="{{.Shop.BannerURL}}" alt="Banner" class="w-full h-full object-cover {{if not .Shop.BannerURL}}hidden{{end}}">
+                    <div id="bannerPlaceholder" class="absolute inset-0 flex items-center justify-center {{if .Shop.BannerURL}}hidden{{end}}">
+                        <span class="material-icons text-gray-400 text-4xl">panorama</span>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" name="banner_url" value="{{.Shop.BannerURL}}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Banner URL">
+                    <label class="bg-teal-600 text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-teal-700 transition text-sm">
+                        Upload
+                        <input type="file" accept="image/*" onchange="uploadImage(this, 'banner_url', 'bannerPreview', 'bannerPlaceholder')" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Shop Logo</label>
+                <div class="flex items-center gap-4">
+                    <div class="relative w-20 h-20 bg-gray-200 rounded-full overflow-hidden">
+                        <img id="logoPreview" src="{{.Shop.LogoURL}}" alt="Logo" class="w-full h-full object-cover {{if not .Shop.LogoURL}}hidden{{end}}">
+                        <div id="logoPlaceholder" class="absolute inset-0 flex items-center justify-center {{if .Shop.LogoURL}}hidden{{end}}">
+                            <span class="material-icons text-gray-400">storefront</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex gap-2">
+                            <input type="text" name="logo_url" value="{{.Shop.LogoURL}}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Logo URL">
+                            <label class="bg-teal-600 text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-teal-700 transition text-sm">
+                                Upload
+                                <input type="file" accept="image/*" onchange="uploadImage(this, 'logo_url', 'logoPreview', 'logoPlaceholder')" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Name -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Shop Name *</label>
+                <input type="text" name="name" value="{{.Shop.Name}}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500">{{.Shop.Description}}</textarea>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="text" name="phone" value="{{.Shop.Phone}}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="0xx-xxx-xxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" value="{{.Shop.Email}}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="shop@example.com">
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea name="address" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Shop address...">{{.Shop.Address}}</textarea>
+            </div>
+
+            <button type="submit" class="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition font-medium">
+                Save Changes
+            </button>
+        </form>
+    </div>
+    {{end}}
+</div>
+
+<script>
+function uploadImage(input, fieldName, previewId, placeholderId) {
+    if (!input.files || !input.files[0]) return;
+
+    var formData = new FormData();
+    formData.append('file', input.files[0]);
+
+    $.ajax({
+        url: '/api/seller/upload',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') }
+    }).done(function(res) {
+        var url = res.url || res.data;
+        $('input[name="' + fieldName + '"]').val(url);
+        $('#' + previewId).attr('src', url).removeClass('hidden');
+        $('#' + placeholderId).addClass('hidden');
+        showSuccess('Image uploaded');
+    }).fail(function() {
+        showError('Failed to upload image');
+    });
+}
+
+$('#shopSettingsForm').on('submit', function(e) {
+    e.preventDefault();
+    var data = {
+        name: this.name.value,
+        description: this.description.value,
+        logo_url: this.logo_url.value,
+        banner_url: this.banner_url.value,
+        phone: this.phone.value,
+        email: this.email.value,
+        address: this.address.value
+    };
+    api('PUT', '/api/seller/shop', data).done(function(res) {
+        showSuccess('Shop settings saved!');
+    }).fail(function(xhr) {
+        var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save';
+        showError(msg);
+    });
+});
+</script>

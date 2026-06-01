@@ -1,0 +1,70 @@
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+            <!-- Product Image -->
+            <div class="h-64 md:h-full bg-gray-200 flex items-center justify-center">
+                {{if .Product.ImageURL}}
+                <img src="{{.Product.ImageURL}}" alt="{{.Product.Name}}" class="w-full h-full object-cover">
+                {{else}}
+                <span class="text-gray-400 text-6xl">📦</span>
+                {{end}}
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-6 md:p-8">
+                {{if .Product.CategoryName}}
+                <p class="text-sm text-indigo-600 font-medium mb-2">{{.Product.CategoryName}}</p>
+                {{end}}
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{{.Product.Name}}</h1>
+                <p class="text-gray-600 mb-6">{{.Product.Description}}</p>
+
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-3xl font-bold text-indigo-600">฿{{.Product.Price}}</span>
+                    <span class="text-sm text-gray-500">Stock: {{.Product.StockQuantity}}</span>
+                </div>
+
+                <!-- Shop Info -->
+                {{if .Product.ShopName}}
+                <a href="/shops/{{.Product.ShopID}}" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition mb-6">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <span class="material-icons text-indigo-600 text-sm">store</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{.Product.ShopName}}</p>
+                        <p class="text-xs text-indigo-600">Visit Shop →</p>
+                    </div>
+                </a>
+                {{end}}
+
+                <!-- Add to Cart -->
+                <div class="flex items-center gap-3">
+                    <input type="number" id="qty" value="1" min="1" max="{{.Product.StockQuantity}}"
+                        class="w-20 border border-gray-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="addToCart('{{.Product.ID}}')"
+                        class="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-medium">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back link -->
+    <div class="mt-6">
+        <a href="/products" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">← Back to Products</a>
+    </div>
+</div>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<script>
+function addToCart(productId) {
+    var qty = parseInt($('#qty').val()) || 1;
+    api('POST', '/api/cart/items', { product_id: productId, quantity: qty }).done(function() {
+        api('GET', '/api/cart/count').done(function(data) { $('#cart-count').text(data.count || 0); });
+        showSuccess('Added to cart');
+    }).fail(function(xhr) {
+        if (xhr.status === 401) window.location.href = '/login';
+        else showError(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to add to cart');
+    });
+}
+</script>

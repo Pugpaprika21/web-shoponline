@@ -13,18 +13,18 @@ import (
 
 // JWTClaims holds the JWT token claims
 type JWTClaims struct {
-	UserID   string `json:"user_id"`
-	Email    string `json:"email"`
-	RoleName string `json:"role_name"`
+	UserID string   `json:"user_id"`
+	Email  string   `json:"email"`
+	Roles  []string `json:"roles"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken creates a new JWT token for a user
-func GenerateToken(cfg config.JWTConfig, userID, email, roleName string) (string, error) {
+func GenerateToken(cfg config.JWTConfig, userID, email string, roles []string) (string, error) {
 	claims := JWTClaims{
-		UserID:   userID,
-		Email:    email,
-		RoleName: roleName,
+		UserID: userID,
+		Email:  email,
+		Roles:  roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(cfg.ExpireHour) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -65,7 +65,7 @@ func RequireJWT(cfg config.JWTConfig) fiber.Handler {
 
 		c.Locals("userID", claims.UserID)
 		c.Locals("userEmail", claims.Email)
-		c.Locals("userRole", claims.RoleName)
+		c.Locals("userRoles", claims.Roles)
 		return c.Next()
 	}
 }
@@ -93,7 +93,7 @@ func RequireAdminJWT(cfg config.JWTConfig) fiber.Handler {
 			return c.Redirect("/admin/login")
 		}
 
-		if claims.RoleName != "admin" {
+		if !hasRole(claims.Roles, "admin") {
 			if isAPIRequest(c) {
 				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 					"error": "Admin access required",
@@ -104,9 +104,58 @@ func RequireAdminJWT(cfg config.JWTConfig) fiber.Handler {
 
 		c.Locals("userID", claims.UserID)
 		c.Locals("userEmail", claims.Email)
-		c.Locals("userRole", claims.RoleName)
+		c.Locals("userRoles", claims.Roles)
 		return c.Next()
 	}
+}
+
+// RequireSellerJWT validates JWT and checks seller or admin role
+func RequireSellerJWT(cfg config.JWTConfig) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tokenString := extractToken(c)
+		if tokenString == "" {
+			if isAPIRequest(c) {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Authentication required",
+				})
+			}
+			return c.Redirect("/login")
+		}
+
+		claims, err := validateToken(cfg.Secret, tokenString)
+		if err != nil {
+			if isAPIRequest(c) {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Invalid or expired token",
+				})
+			}
+			return c.Redirect("/login")
+		}
+
+		if !hasRole(claims.Roles, "seller") && !hasRole(claims.Roles, "admin") {
+			if isAPIRequest(c) {
+				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+					"error": "Seller access required",
+				})
+			}
+			return c.Redirect("/login")
+		}
+
+		c.Locals("userID", claims.UserID)
+		c.Locals("userEmail", claims.Email)
+		c.Locals("userRoles", claims.Roles)
+		return c.Next()
+	}
+}
+
+// hasRole checks if a role name exists in the roles slice
+func hasRole(roles []string, roleName string) bool {
+	for _, r := range roles {
+		if r == roleName {
+			return true
+		}
+	}
+	return false
 }
 
 // extractToken gets the token from Authorization header or cookie

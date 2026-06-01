@@ -1,0 +1,76 @@
+<div>
+    <!-- Shop Header -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        {{if .Shop.BannerURL}}
+        <div class="h-32 md:h-48 bg-gray-200">
+            <img src="{{.Shop.BannerURL}}" alt="{{.Shop.Name}}" class="w-full h-full object-cover">
+        </div>
+        {{end}}
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {{if .Shop.LogoURL}}
+                <img src="{{.Shop.LogoURL}}" alt="{{.Shop.Name}}" class="w-full h-full object-cover">
+                {{else}}
+                <span class="material-icons text-indigo-600 text-2xl">store</span>
+                {{end}}
+            </div>
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-gray-900">{{.Shop.Name}}</h1>
+                {{if .Shop.Description}}
+                <p class="text-gray-600 mt-1">{{.Shop.Description}}</p>
+                {{end}}
+                <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
+                    {{if .Shop.Phone}}<span>📞 {{.Shop.Phone}}</span>{{end}}
+                    {{if .Shop.Email}}<span>✉️ {{.Shop.Email}}</span>{{end}}
+                    {{if .Shop.IsVerified}}<span class="text-green-600 font-medium">✓ Verified</span>{{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Products -->
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Products from this shop</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {{range .Products}}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+            <a href="/products/{{.ID}}">
+                <div class="h-40 bg-gray-200 flex items-center justify-center">
+                    {{if .ImageURL}}
+                    <img src="{{.ImageURL}}" alt="{{.Name}}" class="h-full w-full object-cover">
+                    {{else}}
+                    <span class="text-gray-400 text-3xl">📦</span>
+                    {{end}}
+                </div>
+            </a>
+            <div class="p-3">
+                <a href="/products/{{.ID}}" class="text-sm font-semibold text-gray-800 truncate block hover:text-indigo-600">{{.Name}}</a>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-lg font-bold text-indigo-600">฿{{.Price}}</span>
+                    <button onclick="addToCart('{{.ID}}')" class="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">Add</button>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="col-span-full text-center py-12">
+            <p class="text-gray-500">This shop has no products yet.</p>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="mt-6">
+        <a href="/products" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">← Back to All Products</a>
+    </div>
+</div>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<script>
+function addToCart(productId) {
+    api('POST', '/api/cart/items', { product_id: productId, quantity: 1 }).done(function() {
+        api('GET', '/api/cart/count').done(function(data) { $('#cart-count').text(data.count || 0); });
+        showSuccess('Added to cart');
+    }).fail(function(xhr) {
+        if (xhr.status === 401) window.location.href = '/login';
+        else showError(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to add to cart');
+    });
+}
+</script>

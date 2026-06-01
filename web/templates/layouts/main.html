@@ -6,53 +6,143 @@
     <title>{{.Title}} - ShopOnline</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
-    <nav class="bg-white shadow-md">
+    <nav class="bg-white shadow-md sticky top-0 z-30" id="main-nav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/" class="text-xl font-bold text-indigo-600">ShopOnline</a>
-                    <div class="ml-10 flex space-x-4">
+                    <a href="/" id="store-brand" class="text-xl font-bold text-indigo-600">ShopOnline</a>
+                    <!-- Desktop nav links -->
+                    <div class="ml-10 hidden md:flex space-x-4" id="nav-links">
                         <a href="/" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Home</a>
                         <a href="/products" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Products</a>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4" id="nav-actions">
-                    <a href="/cart" class="relative text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
-                        🛒 Cart <span id="cart-count" class="bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 ml-1">0</span>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Cart & Auth (always visible) -->
+                    <a href="/cart" class="relative text-gray-700 hover:text-indigo-600 px-2 sm:px-3 py-2 text-sm font-medium" id="nav-actions">
+                        🛒 <span class="hidden sm:inline">Cart</span> <span id="cart-count" class="bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 ml-1">0</span>
                     </a>
-                    <span id="auth-nav"></span>
+                    <span id="auth-nav" class="hidden sm:inline"></span>
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-btn" class="md:hidden text-gray-700 hover:text-indigo-600 p-2" aria-label="Open menu">
+                        <span class="material-icons">menu</span>
+                    </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mobile nav dropdown -->
+        <div id="mobile-nav" class="hidden md:hidden border-t border-gray-200 bg-white shadow-lg">
+            <div class="px-4 py-3 space-y-1">
+                <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Home</a>
+                <a href="/products" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Products</a>
+                <a href="/cart" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">🛒 Cart</a>
+                <div id="mobile-auth-nav" class="border-t border-gray-200 pt-2 mt-2"></div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
         {{embed}}
     </main>
 
     <!-- Footer -->
     <footer class="bg-white border-t mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <p class="text-center text-gray-500 text-sm">&copy; 2024 ShopOnline. All rights reserved.</p>
+            <div id="footer-social" class="flex justify-center space-x-6 mb-3"></div>
+            <div id="footer-contact" class="text-center text-gray-500 text-xs mb-2"></div>
+            <p id="footer-text" class="text-center text-gray-500 text-sm">&copy; 2024 ShopOnline. All rights reserved.</p>
         </div>
     </footer>
 
+    <script src="/static/js/app.js"></script>
     <script>
     $(document).ready(function() {
+        loadStoreSettings();
+        loadAuthState();
+
+        // Mobile menu toggle
+        $('#mobile-menu-btn').on('click', function() {
+            $('#mobile-nav').toggleClass('hidden');
+        });
+
+        // Close mobile menu when clicking a link
+        $('#mobile-nav a').on('click', function() {
+            $('#mobile-nav').addClass('hidden');
+        });
+    });
+
+    function loadStoreSettings() {
+        $.getJSON('/api/store-info', function(response) {
+            var s = response.data || {};
+
+            // Store name / logo
+            if (s.store_name) {
+                var brandHtml = '';
+                if (s.store_logo_url) {
+                    brandHtml += '<img src="' + s.store_logo_url + '" alt="' + s.store_name + '" class="h-8 w-8 object-contain mr-2 rounded">';
+                }
+                brandHtml += s.store_name;
+                $('#store-brand').html(brandHtml);
+                document.title = document.title.replace('ShopOnline', s.store_name);
+            }
+
+            // Primary color
+            if (s.primary_color) {
+                document.documentElement.style.setProperty('--primary-color', s.primary_color);
+            }
+
+            // Footer text
+            if (s.footer_text) {
+                $('#footer-text').text(s.footer_text);
+            }
+
+            // Social links
+            var socialHtml = '';
+            if (s.social_facebook) socialHtml += '<a href="' + s.social_facebook + '" target="_blank" class="text-gray-400 hover:text-blue-600">Facebook</a>';
+            if (s.social_instagram) socialHtml += '<a href="' + s.social_instagram + '" target="_blank" class="text-gray-400 hover:text-pink-600">Instagram</a>';
+            if (s.social_line) socialHtml += '<a href="#" class="text-gray-400 hover:text-green-600">Line: ' + s.social_line + '</a>';
+            $('#footer-social').html(socialHtml);
+
+            // Contact info
+            var contactParts = [];
+            if (s.contact_phone) contactParts.push('📞 ' + s.contact_phone);
+            if (s.contact_email) contactParts.push('✉️ ' + s.contact_email);
+            if (contactParts.length > 0) {
+                $('#footer-contact').text(contactParts.join('  |  '));
+            }
+        });
+    }
+
+    function loadAuthState() {
         $.getJSON('/api/auth/me', function(response) {
             if (response.data) {
+                // Desktop auth
                 var html = '<span class="text-sm text-gray-600">Hi, ' + response.data.full_name + '</span>';
                 html += ' <button onclick="logout()" class="text-sm text-red-600 hover:text-red-800 ml-2">Logout</button>';
-                if (response.data.role_name === 'admin') {
+                var roles = response.data.role_names || [];
+                if (roles.indexOf('admin') !== -1) {
                     html += ' <a href="/admin" class="text-sm text-indigo-600 hover:text-indigo-800 ml-2">Admin</a>';
                 }
-                $('#auth-nav').html(html);
-                $.getJSON('/api/cart/count', function(data) {
+                $('#auth-nav').html(html).removeClass('hidden');
+
+                // Mobile auth
+                var mobileHtml = '<span class="block px-3 py-1 text-sm text-gray-600">Hi, ' + response.data.full_name + '</span>';
+                if (roles.indexOf('admin') !== -1) {
+                    mobileHtml += '<a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:bg-gray-50">Admin Panel</a>';
+                }
+                mobileHtml += '<button onclick="logout()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-50">Logout</button>';
+                $('#mobile-auth-nav').html(mobileHtml);
+
+                // Load cart count
+                api('GET', '/api/cart/count').done(function(data) {
                     $('#cart-count').text(data.count || 0);
                 });
             } else {
@@ -61,18 +151,25 @@
         }).fail(function() {
             showLoginLinks();
         });
+    }
 
-        function showLoginLinks() {
-            $('#auth-nav').html(
-                '<a href="/login" class="text-gray-700 hover:text-indigo-600 text-sm font-medium">Login</a>' +
-                ' <a href="/register" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 ml-2">Register</a>'
-            );
-        }
-    });
+    function showLoginLinks() {
+        // Desktop
+        $('#auth-nav').html(
+            '<a href="/login" class="text-gray-700 hover:text-indigo-600 text-sm font-medium">Login</a>' +
+            ' <a href="/register" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 ml-2">Register</a>'
+        ).removeClass('hidden');
+
+        // Mobile
+        $('#mobile-auth-nav').html(
+            '<a href="/login" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Login</a>' +
+            '<a href="/register" class="block px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:bg-gray-50">Register</a>'
+        );
+    }
 
     function logout() {
-        localStorage.removeItem('token');
-        $.post('/api/auth/logout', function() {
+        api('POST', '/api/auth/logout').always(function() {
+            localStorage.removeItem('token');
             window.location.href = '/';
         });
     }

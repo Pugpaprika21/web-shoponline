@@ -12,8 +12,7 @@ type User struct {
 	Email        string         `gorm:"type:varchar(255);uniqueIndex:idx_users_email;not null" json:"email"`
 	PasswordHash string         `gorm:"type:varchar(255);not null" json:"-"`
 	FullName     string         `gorm:"type:varchar(255);not null" json:"full_name"`
-	RoleID       *string        `gorm:"type:uuid" json:"role_id"`
-	Role         *Role          `gorm:"foreignKey:RoleID" json:"role,omitempty"`
+	Roles        []Role         `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 	IsActive     bool           `gorm:"default:true" json:"is_active"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`

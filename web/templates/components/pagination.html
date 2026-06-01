@@ -1,0 +1,26 @@
+{{define "pagination"}}
+{{if .Pagination}}
+<div class="mt-4 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow px-4 sm:px-6 py-3 gap-2">
+    <div class="text-sm text-gray-600">
+        Total: {{.Pagination.TotalItems}} items
+    </div>
+    <div class="flex items-center gap-2">
+        {{if gt .Pagination.Page 1}}
+        <a href="?page={{subtract .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}{{if .Search}}&search={{.Search}}{{end}}"
+            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Previous</a>
+        {{else}}
+        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
+        {{end}}
+
+        <span class="px-3 py-1 text-sm text-gray-700">Page {{.Pagination.Page}} of {{.Pagination.TotalPages}}</span>
+
+        {{if lt .Pagination.Page .Pagination.TotalPages}}
+        <a href="?page={{add .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}{{if .Search}}&search={{.Search}}{{end}}"
+            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Next</a>
+        {{else}}
+        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
+        {{end}}
+    </div>
+</div>
+{{end}}
+{{end}}

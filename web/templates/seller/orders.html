@@ -1,0 +1,77 @@
+<div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">My Orders</h1>
+
+    {{if not .Shop}}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">You need to create a shop first.</p>
+        <a href="/seller" class="text-teal-600 hover:underline mt-2 inline-block">Go to Dashboard</a>
+    </div>
+    {{else}}
+    <!-- Orders Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Order ID</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Customer</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Items</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Total</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Date</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<script>
+$(document).ready(function() {
+    loadOrders();
+});
+
+function loadOrders() {
+    api('GET', '/api/seller/orders').done(function(res) {
+        var orders = res.data || [];
+        if (orders.length === 0) {
+            $('#ordersTableBody').html('<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No orders yet.</td></tr>');
+            return;
+        }
+        var html = '';
+        orders.forEach(function(order) {
+            var statusClass = getStatusClass(order.status);
+            var itemCount = order.items ? order.items.length : 0;
+            var date = new Date(order.created_at).toLocaleDateString('th-TH');
+            var customerName = order.user ? order.user.full_name : 'Unknown';
+
+            html += '<tr class="border-b hover:bg-gray-50">';
+            html += '<td class="px-4 py-3 font-mono text-xs text-gray-600">' + order.id.substring(0, 8) + '...</td>';
+            html += '<td class="px-4 py-3 text-gray-800">' + customerName + '</td>';
+            html += '<td class="px-4 py-3 text-gray-600">' + itemCount + ' item(s)</td>';
+            html += '<td class="px-4 py-3 text-gray-800 font-medium">฿' + Number(order.total_amount).toLocaleString() + '</td>';
+            html += '<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ' + statusClass + '">' + order.status + '</span></td>';
+            html += '<td class="px-4 py-3 text-gray-500 text-xs">' + date + '</td>';
+            html += '</tr>';
+        });
+        $('#ordersTableBody').html(html);
+    }).fail(function() {
+        $('#ordersTableBody').html('<tr><td colspan="6" class="px-4 py-8 text-center text-red-400">Failed to load orders</td></tr>');
+    });
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'pending': return 'bg-yellow-100 text-yellow-700';
+        case 'confirmed': return 'bg-blue-100 text-blue-700';
+        case 'shipped': return 'bg-purple-100 text-purple-700';
+        case 'delivered': return 'bg-green-100 text-green-700';
+        case 'cancelled': return 'bg-red-100 text-red-700';
+        default: return 'bg-gray-100 text-gray-600';
+    }
+}
+</script>

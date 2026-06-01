@@ -1,0 +1,214 @@
+<div>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">My Products</h1>
+        {{if .Shop}}
+        <button onclick="showProductModal()" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition text-sm font-medium">
+            <span class="material-icons align-middle text-sm mr-1">add</span> Add Product
+        </button>
+        {{end}}
+    </div>
+
+    {{if not .Shop}}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <p class="text-gray-500">You need to create a shop first.</p>
+        <a href="/seller" class="text-teal-600 hover:underline mt-2 inline-block">Go to Dashboard</a>
+    </div>
+    {{else}}
+    <!-- Products Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Product</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Price</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Stock</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                        <th class="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 id="productModalTitle" class="text-lg font-semibold mb-4">Add Product</h3>
+            <form id="productForm">
+                <input type="hidden" name="product_id" id="productId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" name="name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                        <input type="number" name="price" step="0.01" min="0" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                        <input type="number" name="stock_quantity" min="0" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="image_url" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Image URL">
+                        <label class="bg-teal-600 text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-teal-700 transition text-sm">
+                            Upload
+                            <input type="file" accept="image/*" onchange="uploadProductImage(this)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="is_active" checked class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                        <span class="text-sm text-gray-700">Active (visible to customers)</span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="hideProductModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+<script>
+$(document).ready(function() {
+    loadProducts();
+});
+
+function loadProducts() {
+    api('GET', '/api/seller/products').done(function(res) {
+        var products = res.data || [];
+        if (products.length === 0) {
+            $('#productsTableBody').html('<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">No products yet. Add your first product!</td></tr>');
+            return;
+        }
+        var html = '';
+        products.forEach(function(p) {
+            html += '<tr class="border-b hover:bg-gray-50">';
+            html += '<td class="px-4 py-3"><div class="flex items-center gap-3">';
+            if (p.image_url) {
+                html += '<img src="' + p.image_url + '" class="w-10 h-10 rounded object-cover">';
+            } else {
+                html += '<div class="w-10 h-10 rounded bg-gray-200 flex items-center justify-center"><span class="material-icons text-gray-400 text-sm">image</span></div>';
+            }
+            html += '<span class="font-medium text-gray-800">' + p.name + '</span></div></td>';
+            html += '<td class="px-4 py-3 text-gray-600">฿' + Number(p.price).toLocaleString() + '</td>';
+            html += '<td class="px-4 py-3 text-gray-600">' + p.stock_quantity + '</td>';
+            html += '<td class="px-4 py-3">';
+            if (p.is_active) {
+                html += '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>';
+            } else {
+                html += '<span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Inactive</span>';
+            }
+            html += '</td>';
+            html += '<td class="px-4 py-3 text-right">';
+            html += '<button onclick=\'editProduct(' + JSON.stringify(p) + ')\' class="text-teal-600 hover:text-teal-800 mr-2" title="Edit"><span class="material-icons text-sm">edit</span></button>';
+            html += '<button onclick="deleteProduct(\'' + p.id + '\')" class="text-red-500 hover:text-red-700" title="Delete"><span class="material-icons text-sm">delete</span></button>';
+            html += '</td></tr>';
+        });
+        $('#productsTableBody').html(html);
+    }).fail(function() {
+        $('#productsTableBody').html('<tr><td colspan="5" class="px-4 py-8 text-center text-red-400">Failed to load products</td></tr>');
+    });
+}
+
+function showProductModal(product) {
+    var form = document.getElementById('productForm');
+    form.reset();
+    document.getElementById('productId').value = '';
+    document.getElementById('productModalTitle').textContent = 'Add Product';
+
+    if (product) {
+        document.getElementById('productModalTitle').textContent = 'Edit Product';
+        document.getElementById('productId').value = product.id;
+        form.name.value = product.name || '';
+        form.description.value = product.description || '';
+        form.price.value = product.price || '';
+        form.stock_quantity.value = product.stock_quantity || 0;
+        form.image_url.value = product.image_url || '';
+        form.is_active.checked = product.is_active;
+    }
+
+    document.getElementById('productModal').classList.remove('hidden');
+}
+
+function hideProductModal() {
+    document.getElementById('productModal').classList.add('hidden');
+}
+
+function editProduct(product) {
+    showProductModal(product);
+}
+
+function deleteProduct(id) {
+    showConfirm('Delete Product', 'Are you sure you want to delete this product?').then(function(result) {
+        if (result.isConfirmed) {
+            api('DELETE', '/api/seller/products/' + id).done(function() {
+                showSuccess('Product deleted');
+                loadProducts();
+            }).fail(function() {
+                showError('Failed to delete product');
+            });
+        }
+    });
+}
+
+function uploadProductImage(input) {
+    if (!input.files || !input.files[0]) return;
+    var formData = new FormData();
+    formData.append('file', input.files[0]);
+    $.ajax({
+        url: '/api/seller/upload',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') }
+    }).done(function(res) {
+        var url = res.url || res.data;
+        $('input[name="image_url"]').val(url);
+        showSuccess('Image uploaded');
+    }).fail(function() {
+        showError('Failed to upload image');
+    });
+}
+
+$('#productForm').on('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('productId').value;
+    var data = {
+        name: this.name.value,
+        description: this.description.value,
+        price: parseFloat(this.price.value),
+        stock_quantity: parseInt(this.stock_quantity.value),
+        image_url: this.image_url.value,
+        is_active: this.is_active.checked
+    };
+
+    var method = id ? 'PUT' : 'POST';
+    var url = id ? '/api/seller/products/' + id : '/api/seller/products';
+
+    api(method, url, data).done(function(res) {
+        showSuccess(id ? 'Product updated' : 'Product created');
+        hideProductModal();
+        loadProducts();
+    }).fail(function(xhr) {
+        var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save product';
+        showError(msg);
+    });
+});
+</script>

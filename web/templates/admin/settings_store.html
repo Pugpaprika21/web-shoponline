@@ -1,192 +1,444 @@
 <!-- Header -->
-<div class="flex items-center justify-between mb-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
     <h2 class="text-2xl font-bold text-gray-800">Store Settings</h2>
-    <button onclick="saveSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center gap-2">
-        <span class="material-icons text-sm">save</span> Save Settings
+    <button onclick="saveSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center">
+        <span class="material-icons text-sm">save</span> Save All Settings
     </button>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- General Settings -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">General</h3>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
-                <input type="text" id="store_name" value="{{.Settings.StoreName}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                <input type="text" id="store_logo_url" value="{{.Settings.StoreLogoURL}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                {{if .Settings.StoreLogoURL}}
-                <img src="{{.Settings.StoreLogoURL}}" alt="Logo Preview" class="mt-2 h-16 object-contain rounded border">
-                {{end}}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Banner URL</label>
-                <input type="text" id="store_banner_url" value="{{.Settings.StoreBannerURL}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                {{if .Settings.StoreBannerURL}}
-                <img src="{{.Settings.StoreBannerURL}}" alt="Banner Preview" class="mt-2 h-24 w-full object-cover rounded border">
-                {{end}}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Footer Text</label>
-                <textarea id="footer_text" rows="2"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.FooterText}}</textarea>
+<!-- Tabs -->
+<div class="mb-6 border-b border-gray-200 overflow-x-auto">
+    <nav class="flex space-x-4 min-w-max" id="settings-tabs">
+        <button onclick="showTab('general')" class="tab-btn active px-3 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">General</button>
+        <button onclick="showTab('theme')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Theme</button>
+        <button onclick="showTab('seo')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">SEO</button>
+        <button onclick="showTab('social')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Social</button>
+        <button onclick="showTab('contact')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Contact</button>
+        <button onclick="showTab('shipping')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Shipping</button>
+        <button onclick="showTab('payment')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Payment</button>
+        <button onclick="showTab('notification')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Notification</button>
+        <button onclick="showTab('footer')" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">Footer</button>
+    </nav>
+</div>
+
+<!-- General Tab -->
+<div id="tab-general" class="tab-content">
+    <div class="bg-white rounded-lg shadow p-6 space-y-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+            <input type="text" id="store_name" value="{{.Settings.StoreName}}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
+            <textarea id="store_description" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.StoreDescription}}</textarea>
+        </div>
+
+        <!-- Logo Upload -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Store Logo</label>
+            <div class="flex items-start gap-4">
+                <div id="logo-preview" class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+                    {{if .Settings.StoreLogoURL}}
+                    <img src="{{.Settings.StoreLogoURL}}" class="w-full h-full object-contain">
+                    {{else}}
+                    <span class="text-gray-400 text-xs text-center">No logo</span>
+                    {{end}}
+                </div>
+                <div class="flex-1">
+                    <input type="file" id="logo-file" accept="image/*" class="hidden" onchange="uploadFile(this, 'store_logo_url', 'logo-preview')">
+                    <button type="button" onclick="$('#logo-file').click()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                        Upload Logo
+                    </button>
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 200x200px, PNG/SVG</p>
+                    <input type="text" id="store_logo_url" value="{{.Settings.StoreLogoURL}}" placeholder="Or paste URL..." class="mt-2 w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Colors -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Colors</h3>
-        <div class="space-y-4">
+        <!-- Favicon Upload -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Favicon</label>
+            <div class="flex items-start gap-4">
+                <div id="favicon-preview" class="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+                    {{if .Settings.StoreFaviconURL}}
+                    <img src="{{.Settings.StoreFaviconURL}}" class="w-full h-full object-contain">
+                    {{else}}
+                    <span class="text-gray-400 text-xs">ico</span>
+                    {{end}}
+                </div>
+                <div class="flex-1">
+                    <input type="file" id="favicon-file" accept="image/*" class="hidden" onchange="uploadFile(this, 'store_favicon_url', 'favicon-preview')">
+                    <button type="button" onclick="$('#favicon-file').click()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                        Upload Favicon
+                    </button>
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 32x32px or 64x64px</p>
+                    <input type="text" id="store_favicon_url" value="{{.Settings.StoreFaviconURL}}" placeholder="Or paste URL..." class="mt-2 w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Banner Upload -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Store Banner</label>
+            <div id="banner-preview" class="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden mb-2">
+                {{if .Settings.StoreBannerURL}}
+                <img src="{{.Settings.StoreBannerURL}}" class="w-full h-full object-cover">
+                {{else}}
+                <span class="text-gray-400 text-sm">No banner uploaded</span>
+                {{end}}
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="file" id="banner-file" accept="image/*" class="hidden" onchange="uploadFile(this, 'store_banner_url', 'banner-preview')">
+                <button type="button" onclick="$('#banner-file').click()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                    Upload Banner
+                </button>
+                <input type="text" id="store_banner_url" value="{{.Settings.StoreBannerURL}}" placeholder="Or paste URL..." class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Recommended: 1200x300px, JPG/PNG</p>
+        </div>
+    </div>
+</div>
+
+<!-- Theme Tab -->
+<div id="tab-theme" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
-                <div class="flex items-center gap-3">
-                    <input type="color" id="primary_color" value="{{.Settings.PrimaryColor}}"
-                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer">
-                    <input type="text" id="primary_color_text" value="{{.Settings.PrimaryColor}}"
-                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        onchange="document.getElementById('primary_color').value = this.value">
+                <div class="flex items-center gap-2">
+                    <input type="color" id="primary_color" value="{{.Settings.PrimaryColor}}" class="h-10 w-14 border rounded cursor-pointer">
+                    <input type="text" id="primary_color_text" value="{{.Settings.PrimaryColor}}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="$('#primary_color').val(this.value)">
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
-                <div class="flex items-center gap-3">
-                    <input type="color" id="secondary_color" value="{{.Settings.SecondaryColor}}"
-                        class="h-10 w-16 border border-gray-300 rounded cursor-pointer">
-                    <input type="text" id="secondary_color_text" value="{{.Settings.SecondaryColor}}"
-                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        onchange="document.getElementById('secondary_color').value = this.value">
+                <div class="flex items-center gap-2">
+                    <input type="color" id="secondary_color" value="{{.Settings.SecondaryColor}}" class="h-10 w-14 border rounded cursor-pointer">
+                    <input type="text" id="secondary_color_text" value="{{.Settings.SecondaryColor}}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="$('#secondary_color').val(this.value)">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" id="accent_color" value="{{.Settings.AccentColor}}" class="h-10 w-14 border rounded cursor-pointer">
+                    <input type="text" id="accent_color_text" value="{{.Settings.AccentColor}}" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="$('#accent_color').val(this.value)">
                 </div>
             </div>
         </div>
-
-        <h3 class="text-lg font-semibold text-gray-800 mb-4 mt-8">Social Media</h3>
-        <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
-                <input type="text" id="social_facebook" value="{{.Settings.SocialFacebook}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="https://facebook.com/yourpage">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Font Family</label>
+                <select id="font_family" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                    <option value="default" {{if eq .Settings.FontFamily "default"}}selected{{end}}>Default (System)</option>
+                    <option value="inter" {{if eq .Settings.FontFamily "inter"}}selected{{end}}>Inter</option>
+                    <option value="noto-sans-thai" {{if eq .Settings.FontFamily "noto-sans-thai"}}selected{{end}}>Noto Sans Thai</option>
+                    <option value="sarabun" {{if eq .Settings.FontFamily "sarabun"}}selected{{end}}>Sarabun</option>
+                    <option value="prompt" {{if eq .Settings.FontFamily "prompt"}}selected{{end}}>Prompt</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Layout Style</label>
+                <select id="layout_style" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                    <option value="grid" {{if eq .Settings.LayoutStyle "grid"}}selected{{end}}>Grid</option>
+                    <option value="list" {{if eq .Settings.LayoutStyle "list"}}selected{{end}}>List</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Products Per Page</label>
+                <input type="number" id="products_per_page" value="{{.Settings.ProductsPerPage}}" min="4" max="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEO Tab -->
+<div id="tab-seo" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
+            <input type="text" id="meta_title" value="{{.Settings.MetaTitle}}" placeholder="My Store - Best Products Online" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <p class="text-xs text-gray-400 mt-1">Recommended: 50-60 characters</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
+            <textarea id="meta_description" rows="2" placeholder="A brief description of your store..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.MetaDescription}}</textarea>
+            <p class="text-xs text-gray-400 mt-1">Recommended: 150-160 characters</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Meta Keywords</label>
+            <input type="text" id="meta_keywords" value="{{.Settings.MetaKeywords}}" placeholder="shop, online, products" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Google Analytics ID</label>
+            <input type="text" id="google_analytics" value="{{.Settings.GoogleAnalytics}}" placeholder="G-XXXXXXXXXX" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+    </div>
+</div>
+
+<!-- Social Tab -->
+<div id="tab-social" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                <input type="text" id="social_facebook" value="{{.Settings.SocialFacebook}}" placeholder="https://facebook.com/yourpage" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                <input type="text" id="social_instagram" value="{{.Settings.SocialInstagram}}" placeholder="https://instagram.com/yourpage" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Line ID</label>
-                <input type="text" id="social_line" value="{{.Settings.SocialLine}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="@yourlineid">
+                <input type="text" id="social_line" value="{{.Settings.SocialLine}}" placeholder="@yourlineid" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
-                <input type="text" id="social_instagram" value="{{.Settings.SocialInstagram}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="https://instagram.com/yourpage">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Twitter / X</label>
+                <input type="text" id="social_twitter" value="{{.Settings.SocialTwitter}}" placeholder="https://twitter.com/yourpage" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                <input type="text" id="social_youtube" value="{{.Settings.SocialYoutube}}" placeholder="https://youtube.com/@yourchannel" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
+                <input type="text" id="social_tiktok" value="{{.Settings.SocialTiktok}}" placeholder="https://tiktok.com/@yourpage" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Contact Info -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
-        <div class="space-y-4">
+<!-- Contact Tab -->
+<div id="tab-contact" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input type="text" id="contact_phone" value="{{.Settings.ContactPhone}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="0xx-xxx-xxxx">
+                <input type="text" id="contact_phone" value="{{.Settings.ContactPhone}}" placeholder="0xx-xxx-xxxx" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="text" id="contact_email" value="{{.Settings.ContactEmail}}"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="contact@yourstore.com">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <textarea id="contact_address" rows="3"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Store address">{{.Settings.ContactAddress}}</textarea>
+                <input type="text" id="contact_email" value="{{.Settings.ContactEmail}}" placeholder="contact@store.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <textarea id="contact_address" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.ContactAddress}}</textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Google Maps Embed URL</label>
+            <input type="text" id="contact_map_url" value="{{.Settings.ContactMapURL}}" placeholder="https://maps.google.com/..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Business Hours</label>
+            <input type="text" id="business_hours" value="{{.Settings.BusinessHours}}" placeholder="Mon-Fri 9:00-18:00, Sat 10:00-16:00" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
     </div>
+</div>
 
-    <!-- Preview -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Preview</h3>
-        <div class="border rounded-lg overflow-hidden">
-            <div id="preview-banner" class="h-24 bg-gray-200 flex items-center justify-center text-gray-400">
-                {{if .Settings.StoreBannerURL}}
-                <img src="{{.Settings.StoreBannerURL}}" class="w-full h-full object-cover">
-                {{else}}
-                <span>No banner set</span>
-                {{end}}
+<!-- Shipping Tab -->
+<div id="tab-shipping" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div class="flex items-center gap-3">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="shipping_enabled" {{if eq .Settings.ShippingEnabled "true"}}checked{{end}} class="rounded border-gray-300 text-indigo-600 mr-2">
+                <span class="text-sm font-medium text-gray-700">Enable Shipping</span>
+            </label>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Free Shipping Minimum (฿)</label>
+                <input type="number" id="shipping_free_minimum" value="{{.Settings.ShippingFreeMinimum}}" placeholder="1000" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                <p class="text-xs text-gray-400 mt-1">0 = no free shipping</p>
             </div>
-            <div id="preview-header" class="p-4 text-white flex items-center gap-3" style="background-color: {{.Settings.PrimaryColor}}">
-                {{if .Settings.StoreLogoURL}}
-                <img src="{{.Settings.StoreLogoURL}}" class="h-8 w-8 object-contain rounded">
-                {{end}}
-                <span class="font-bold" id="preview-name">{{.Settings.StoreName}}</span>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Flat Rate Shipping (฿)</label>
+                <input type="number" id="shipping_flat_rate" value="{{.Settings.ShippingFlatRate}}" placeholder="50" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
-            <div class="p-4 text-sm text-gray-600">
-                <p id="preview-footer">{{.Settings.FooterText}}</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Note (shown to customer)</label>
+            <textarea id="shipping_note" rows="2" placeholder="Delivery within 3-5 business days" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.ShippingNote}}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Tab -->
+<div id="tab-payment" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div class="space-y-3">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="payment_cod" {{if eq .Settings.PaymentCOD "true"}}checked{{end}} class="rounded border-gray-300 text-indigo-600 mr-2">
+                <span class="text-sm font-medium text-gray-700">Cash on Delivery (COD)</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="payment_transfer" {{if eq .Settings.PaymentTransfer "true"}}checked{{end}} class="rounded border-gray-300 text-indigo-600 mr-2">
+                <span class="text-sm font-medium text-gray-700">Bank Transfer</span>
+            </label>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                <input type="text" id="payment_bank_name" value="{{.Settings.PaymentBankName}}" placeholder="e.g. Kasikorn Bank" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                <input type="text" id="payment_bank_account" value="{{.Settings.PaymentBankAccount}}" placeholder="xxx-x-xxxxx-x" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">PromptPay Number</label>
+            <input type="text" id="payment_promptpay" value="{{.Settings.PaymentPromptpay}}" placeholder="Phone or ID number" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Note</label>
+            <textarea id="payment_note" rows="2" placeholder="Additional payment instructions..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.PaymentNote}}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Tab -->
+<div id="tab-notification" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Order Notification Email</label>
+            <input type="email" id="notify_order_email" value="{{.Settings.NotifyOrderEmail}}" placeholder="admin@store.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <p class="text-xs text-gray-400 mt-1">Receive email when new order is placed</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">LINE Notify Token</label>
+            <input type="text" id="notify_line_token" value="{{.Settings.NotifyLineToken}}" placeholder="Your LINE Notify token" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <p class="text-xs text-gray-400 mt-1">Get notifications via LINE when orders come in</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="notify_low_stock" {{if eq .Settings.NotifyLowStock "true"}}checked{{end}} class="rounded border-gray-300 text-indigo-600 mr-2">
+                <span class="text-sm font-medium text-gray-700">Notify on Low Stock</span>
+            </label>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
+            <input type="number" id="low_stock_threshold" value="{{.Settings.LowStockThreshold}}" placeholder="10" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 max-w-xs">
+            <p class="text-xs text-gray-400 mt-1">Alert when product stock falls below this number</p>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Tab -->
+<div id="tab-footer" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Footer Text</label>
+            <input type="text" id="footer_text" value="{{.Settings.FooterText}}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">About Us (Footer)</label>
+            <textarea id="footer_about" rows="3" placeholder="Brief about your store..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">{{.Settings.FooterAbout}}</textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Copyright Text</label>
+            <input type="text" id="footer_copyright" value="{{.Settings.FooterCopyright}}" placeholder="© 2024 Your Store. All rights reserved." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
         </div>
     </div>
 </div>
 
 <!-- Success Toast -->
-<div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-opacity">
+<div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-opacity z-50">
     Settings saved successfully!
 </div>
 
 <script>
-// Sync color pickers with text inputs
-$('#primary_color').on('input', function() {
-    $('#primary_color_text').val($(this).val());
-});
-$('#secondary_color').on('input', function() {
-    $('#secondary_color_text').val($(this).val());
-});
+// Tab switching
+function showTab(tabName) {
+    $('.tab-content').addClass('hidden');
+    $('#tab-' + tabName).removeClass('hidden');
+    $('.tab-btn').removeClass('active border-indigo-600 text-indigo-600').addClass('border-transparent text-gray-500');
+    $(event.target).addClass('active border-indigo-600 text-indigo-600').removeClass('border-transparent text-gray-500');
+}
+
+// Sync color pickers
+$('#primary_color').on('input', function() { $('#primary_color_text').val(this.value); });
+$('#secondary_color').on('input', function() { $('#secondary_color_text').val(this.value); });
+$('#accent_color').on('input', function() { $('#accent_color_text').val(this.value); });
+
+// File upload
+function uploadFile(input, targetFieldId, previewId) {
+    var file = input.files[0];
+    if (!file) return;
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    $.ajax({
+        url: '/api/admin/upload',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+        success: function(response) {
+            $('#' + targetFieldId).val(response.url);
+            // Update preview
+            var previewEl = $('#' + previewId);
+            previewEl.html('<img src="' + response.url + '" class="w-full h-full object-' + (previewId.includes('banner') ? 'cover' : 'contain') + '">');
+            showSuccess('Image uploaded');
+        },
+        error: function(xhr) {
+            showError(xhr.responseJSON ? xhr.responseJSON.error : 'Upload failed');
+        }
+    });
+}
 
 function saveSettings() {
     var data = {
         store_name: $('#store_name').val(),
+        store_description: $('#store_description').val(),
         store_logo_url: $('#store_logo_url').val(),
+        store_favicon_url: $('#store_favicon_url').val(),
         store_banner_url: $('#store_banner_url').val(),
         primary_color: $('#primary_color').val(),
         secondary_color: $('#secondary_color').val(),
-        footer_text: $('#footer_text').val(),
+        accent_color: $('#accent_color').val(),
+        font_family: $('#font_family').val(),
+        layout_style: $('#layout_style').val(),
+        products_per_page: $('#products_per_page').val(),
+        meta_title: $('#meta_title').val(),
+        meta_description: $('#meta_description').val(),
+        meta_keywords: $('#meta_keywords').val(),
+        google_analytics: $('#google_analytics').val(),
         social_facebook: $('#social_facebook').val(),
         social_line: $('#social_line').val(),
         social_instagram: $('#social_instagram').val(),
+        social_twitter: $('#social_twitter').val(),
+        social_youtube: $('#social_youtube').val(),
+        social_tiktok: $('#social_tiktok').val(),
         contact_phone: $('#contact_phone').val(),
         contact_email: $('#contact_email').val(),
-        contact_address: $('#contact_address').val()
+        contact_address: $('#contact_address').val(),
+        contact_map_url: $('#contact_map_url').val(),
+        business_hours: $('#business_hours').val(),
+        shipping_enabled: $('#shipping_enabled').is(':checked') ? 'true' : 'false',
+        shipping_free_minimum: $('#shipping_free_minimum').val(),
+        shipping_flat_rate: $('#shipping_flat_rate').val(),
+        shipping_note: $('#shipping_note').val(),
+        payment_cod: $('#payment_cod').is(':checked') ? 'true' : 'false',
+        payment_transfer: $('#payment_transfer').is(':checked') ? 'true' : 'false',
+        payment_bank_name: $('#payment_bank_name').val(),
+        payment_bank_account: $('#payment_bank_account').val(),
+        payment_promptpay: $('#payment_promptpay').val(),
+        payment_note: $('#payment_note').val(),
+        notify_order_email: $('#notify_order_email').val(),
+        notify_line_token: $('#notify_line_token').val(),
+        notify_low_stock: $('#notify_low_stock').is(':checked') ? 'true' : 'false',
+        low_stock_threshold: $('#low_stock_threshold').val(),
+        footer_text: $('#footer_text').val(),
+        footer_about: $('#footer_about').val(),
+        footer_copyright: $('#footer_copyright').val()
     };
 
-    $.ajax({
-        url: '/api/admin/settings/store',
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function() {
-            // Show toast
-            $('#toast').removeClass('hidden');
-            setTimeout(function() {
-                $('#toast').addClass('hidden');
-            }, 3000);
-            // Update preview
-            $('#preview-name').text(data.store_name);
-            $('#preview-footer').text(data.footer_text);
-            $('#preview-header').css('background-color', data.primary_color);
-        },
-        error: function(xhr) {
-            alert(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings');
-        }
+    api('PUT', '/api/admin/settings/store', data).done(function() {
+        showSuccess('Settings saved successfully');
+    }).fail(function(xhr) {
+        showError(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings');
     });
 }
 </script>

@@ -31,3 +31,49 @@ type MenuResponse struct {
 	IsActive  bool           `json:"is_active"`
 	Children  []MenuResponse `json:"children,omitempty"`
 }
+
+// MenuFlatRow is a flattened menu item with level info for table rendering
+type MenuFlatRow struct {
+	ID        string
+	ParentID  string
+	Name      string
+	Icon      string
+	URL       string
+	SortOrder int
+	IsActive  bool
+	Level     int
+	Prefix    string // e.g. "↳", "  ↳"
+}
+
+// FlattenMenuTree converts a tree of MenuResponse into a flat list with level info
+func FlattenMenuTree(menus []MenuResponse) []MenuFlatRow {
+	var rows []MenuFlatRow
+	flattenRecursive(menus, 0, &rows)
+	return rows
+}
+
+func flattenRecursive(menus []MenuResponse, level int, rows *[]MenuFlatRow) {
+	for _, m := range menus {
+		prefix := ""
+		if level > 0 {
+			for i := 0; i < level-1; i++ {
+				prefix += "  "
+			}
+			prefix += "↳ "
+		}
+		*rows = append(*rows, MenuFlatRow{
+			ID:        m.ID,
+			ParentID:  m.ParentID,
+			Name:      m.Name,
+			Icon:      m.Icon,
+			URL:       m.URL,
+			SortOrder: m.SortOrder,
+			IsActive:  m.IsActive,
+			Level:     level,
+			Prefix:    prefix,
+		})
+		if len(m.Children) > 0 {
+			flattenRecursive(m.Children, level+1, rows)
+		}
+	}
+}

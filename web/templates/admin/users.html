@@ -1,7 +1,7 @@
 <!-- Header with Add Button -->
-<div class="flex items-center justify-between mb-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
     <h2 class="text-2xl font-bold text-gray-800">User Management</h2>
-    <button onclick="openAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center gap-2">
+    <button onclick="openAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
         <span class="material-icons text-sm">person_add</span> Add User
     </button>
 </div>
@@ -24,12 +24,13 @@
 
 <!-- Users Table -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roles</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -37,11 +38,15 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             {{range .Users}}
-            <tr id="user-row-{{.ID}}">
+            <tr id="user-row-{{.ID}}" class="hover:bg-gray-50 transition">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{.Email}}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{.FullName}}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded font-medium">{{.RoleName}}</span>
+                    <div class="flex flex-wrap gap-1">
+                        {{range .RoleNames}}
+                        <span class="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-800 rounded-full font-medium">{{.}}</span>
+                        {{end}}
+                    </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     {{if .IsActive}}
@@ -52,7 +57,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{.CreatedAt}}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <button onclick="openEditModal('{{.ID}}', '{{.FullName}}', '{{.RoleID}}', {{.IsActive}})"
+                    <button onclick='openEditModal({{.ID | printf "%s"}}, {{.FullName | printf "%s"}}, {{.RoleIDs}}, {{.IsActive}})'
                         class="text-indigo-600 hover:text-indigo-900 font-medium mr-3">Edit</button>
                     {{if .IsActive}}
                     <button onclick="toggleActive('{{.ID}}', false)" class="text-red-600 hover:text-red-900 font-medium">Deactivate</button>
@@ -68,37 +73,15 @@
             {{end}}
         </tbody>
     </table>
+    </div>
 </div>
 
 <!-- Pagination -->
-{{if .Pagination}}
-<div class="mt-4 flex items-center justify-between bg-white rounded-lg shadow px-6 py-3">
-    <div class="text-sm text-gray-600">
-        Total: {{.Pagination.TotalItems}} items
-    </div>
-    <div class="flex items-center gap-2">
-        {{if gt .Pagination.Page 1}}
-        <a href="?page={{subtract .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}&search={{.Search}}"
-            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Previous</a>
-        {{else}}
-        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Previous</span>
-        {{end}}
-
-        <span class="px-3 py-1 text-sm text-gray-700">Page {{.Pagination.Page}} of {{.Pagination.TotalPages}}</span>
-
-        {{if lt .Pagination.Page .Pagination.TotalPages}}
-        <a href="?page={{add .Pagination.Page 1}}&page_size={{.Pagination.PageSize}}&search={{.Search}}"
-            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Next</a>
-        {{else}}
-        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-400 rounded cursor-not-allowed">Next</span>
-        {{end}}
-    </div>
-</div>
-{{end}}
+{{template "pagination" .}}
 
 <!-- Add User Modal -->
-<div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+<div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-0 sm:mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Add New User</h3>
@@ -122,14 +105,15 @@
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                        <select name="role_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select a role</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+                        <div class="grid grid-cols-2 gap-2 border rounded-lg p-3 bg-gray-50">
                             {{range .Roles}}
-                            <option value="{{.ID}}">{{.Name}}</option>
+                            <label class="flex items-center text-sm cursor-pointer hover:bg-white p-1 rounded">
+                                <input type="checkbox" name="add_role_ids" value="{{.ID}}" class="rounded border-gray-300 text-indigo-600 mr-2">
+                                <span class="text-gray-700">{{.Name}}</span>
+                            </label>
                             {{end}}
-                        </select>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-2">
@@ -144,8 +128,8 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-0 sm:mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Edit User</h3>
@@ -160,14 +144,15 @@
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                        <select id="edit-role-id" name="role_id"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select a role</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+                        <div class="grid grid-cols-2 gap-2 border rounded-lg p-3 bg-gray-50">
                             {{range .Roles}}
-                            <option value="{{.ID}}">{{.Name}}</option>
+                            <label class="flex items-center text-sm cursor-pointer hover:bg-white p-1 rounded">
+                                <input type="checkbox" name="edit_role_ids" value="{{.ID}}" class="rounded border-gray-300 text-indigo-600 mr-2">
+                                <span class="text-gray-700">{{.Name}}</span>
+                            </label>
                             {{end}}
-                        </select>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-2">
@@ -191,10 +176,16 @@ function closeAddModal() {
     $('#add-user-form')[0].reset();
 }
 
-function openEditModal(id, fullName, roleId, isActive) {
+function openEditModal(id, fullName, roleIds, isActive) {
     $('#edit-user-id').val(id);
     $('#edit-full-name').val(fullName);
-    $('#edit-role-id').val(roleId);
+    // Check the appropriate role checkboxes
+    $('input[name="edit_role_ids"]').prop('checked', false);
+    if (roleIds && roleIds.length) {
+        roleIds.forEach(function(rid) {
+            $('input[name="edit_role_ids"][value="' + rid + '"]').prop('checked', true);
+        });
+    }
     $('#edit-modal').removeClass('hidden');
 }
 
@@ -214,32 +205,36 @@ $('#edit-modal').on('click', function(e) {
 // Create user
 $('#add-user-form').on('submit', function(e) {
     e.preventDefault();
+    var roleIds = [];
+    $('input[name="add_role_ids"]:checked').each(function() {
+        roleIds.push($(this).val());
+    });
+
+    if (roleIds.length === 0) {
+        showError('Please select at least one role');
+        return;
+    }
+
     var formData = {
         email: $(this).find('input[name="email"]').val(),
         full_name: $(this).find('input[name="full_name"]').val(),
         password: $(this).find('input[name="password"]').val(),
-        role_id: $(this).find('select[name="role_id"]').val()
+        role_ids: roleIds
     };
 
-    $.ajax({
-        url: '/api/admin/users',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(formData),
-        success: function() {
-            location.reload();
-        },
-        error: function(xhr) {
-            var msg = 'Failed to create user';
-            if (xhr.responseJSON) {
-                msg = xhr.responseJSON.error || msg;
-                if (xhr.responseJSON.details) {
-                    var details = xhr.responseJSON.details;
-                    msg += ': ' + Object.values(details).join(', ');
-                }
+    api('POST', '/api/admin/users', formData).done(function() {
+        showSuccess('User created successfully');
+        setTimeout(function() { location.reload(); }, 1000);
+    }).fail(function(xhr) {
+        var msg = 'Failed to create user';
+        if (xhr.responseJSON) {
+            msg = xhr.responseJSON.error || msg;
+            if (xhr.responseJSON.details) {
+                var details = xhr.responseJSON.details;
+                msg += ': ' + Object.values(details).join(', ');
             }
-            alert(msg);
         }
+        showError(msg);
     });
 });
 
@@ -247,41 +242,35 @@ $('#add-user-form').on('submit', function(e) {
 $('#edit-user-form').on('submit', function(e) {
     e.preventDefault();
     var id = $('#edit-user-id').val();
+    var roleIds = [];
+    $('input[name="edit_role_ids"]:checked').each(function() {
+        roleIds.push($(this).val());
+    });
+
     var formData = {
         full_name: $('#edit-full-name').val(),
-        role_id: $('#edit-role-id').val()
+        role_ids: roleIds
     };
 
-    $.ajax({
-        url: '/api/admin/users/' + id,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify(formData),
-        success: function() {
-            location.reload();
-        },
-        error: function(xhr) {
-            alert(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to update user');
-        }
+    api('PUT', '/api/admin/users/' + id, formData).done(function() {
+        showSuccess('User updated successfully');
+        setTimeout(function() { location.reload(); }, 1000);
+    }).fail(function(xhr) {
+        showError(xhr.responseJSON ? xhr.responseJSON.error : 'Failed to update user');
     });
 });
 
 // Toggle active status
 function toggleActive(id, active) {
     var action = active ? 'activate' : 'deactivate';
-    if (!confirm('Are you sure you want to ' + action + ' this user?')) return;
-
-    $.ajax({
-        url: '/api/admin/users/' + id,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({ is_active: active }),
-        success: function() {
-            location.reload();
-        },
-        error: function() {
-            alert('Failed to ' + action + ' user');
-        }
+    showConfirm('Confirm', 'Are you sure you want to ' + action + ' this user?').then(function(result) {
+        if (!result.isConfirmed) return;
+        api('PUT', '/api/admin/users/' + id, { is_active: active }).done(function() {
+            showSuccess('User ' + action + 'd successfully');
+            setTimeout(function() { location.reload(); }, 1000);
+        }).fail(function() {
+            showError('Failed to ' + action + ' user');
+        });
     });
 }
 </script>
